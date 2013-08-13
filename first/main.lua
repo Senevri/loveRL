@@ -28,7 +28,9 @@ function love.keypressed(key)
 	end
 end
 
-function love.keydown(key)
+game = {}
+
+function game.keydown(key)
 
 	if key == 'w' then
 		character.y = character.y -1
@@ -47,7 +49,8 @@ function love.keydown(key)
 	end
 end
 
-game = {}
+game.projectiles = {}
+
 function game.handleMouse(character, angle)
 	if love.mouse.isDown('l') then
 		character.x = character.x + 1 * math.sin(angle)
@@ -55,7 +58,16 @@ function game.handleMouse(character, angle)
 
 	end
 
+	if love.mouse.isDown('r') then
+		game.createProjectile(character.x, character.y, character.direction)
+	end
+
 	return character
+end
+
+function game.createProjectile(x, y, direction)
+	local projectile = {x = x, y = y, direction = direction, age = 0 }
+	table.insert(game.projectiles, projectile)
 end
 
 function love.draw()
@@ -65,18 +77,35 @@ function love.draw()
 		love.graphics.draw(image, 400, 300, variable, 8, 8, 8, 8 )
 		love.graphics.setColor(128, 128, 255, 225)
 		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
+		love.graphics.setColor(0, 0, 255, 225)
+		for i = 1, #game.projectiles do
+			local prjctl = game.projectiles[i]
+			if prjctl == nil then
+				break
+			end
+			if prjctl.age > 60 then
+				table.remove(game.projectiles, i)
+			else
+				game.projectiles[i].age = game.projectiles[i].age + 1
+				love.graphics.circle('fill', prjctl.x, prjctl.y, 5,5)
+				game.projectiles[i].x = prjctl.x + 4*math.sin(prjctl.direction)
+				game.projectiles[i].y = prjctl.y - 4*math.cos(prjctl.direction)
+			end
+		end
 		love.graphics.setColor(r, g, b, a)
+
 	end)
 	love.graphics.draw(canvas)
 	
 	for keyIndex =  1, 4, 1 do 
 		key =  {'w', 'a', 's', 'd'}
 		if love.keyboard.isDown(key[keyIndex]) then
-			love.keydown(key[keyIndex])	
+			game.keydown(key[keyIndex])	
 		end
 	end
 
 	angle = -1 * math.getAngle(love.mouse.getX(), love.mouse.getY(), character.x,character.y )
+	character.direction = angle
 	character = game.handleMouse(character, angle)
 
 	--love.graphics.print(math .. "\0", 0, 0)
