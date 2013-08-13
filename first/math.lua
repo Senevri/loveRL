@@ -1,4 +1,3 @@
-local math = {}
 
 -- Averages an arbitrary number of angles.
 function math.averageAngles(...)
