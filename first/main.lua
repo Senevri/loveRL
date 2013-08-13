@@ -47,6 +47,17 @@ function love.keydown(key)
 	end
 end
 
+game = {}
+function game.handleMouse(character, angle)
+	if love.mouse.isDown('l') then
+		character.x = character.x + 1 * math.sin(angle)
+		character.y = character.y - 1 * math.cos(angle)
+
+	end
+
+	return character
+end
+
 function love.draw()
 	canvas:clear();
 	canvas:renderTo(function()
@@ -65,8 +76,10 @@ function love.draw()
 		end
 	end
 
-	--love.graphics.print(math .. "\0", 0, 0)
 	angle = -1 * math.getAngle(love.mouse.getX(), love.mouse.getY(), character.x,character.y )
+	character = game.handleMouse(character, angle)
+
+	--love.graphics.print(math .. "\0", 0, 0)
 	love.graphics.draw(character.gfx, character.x, character.y, angle, 1, 1, 6, 6)
 	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
 	variable = variable + 0.05
