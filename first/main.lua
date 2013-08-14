@@ -1,4 +1,5 @@
 local math = require ("first.math")
+local tiled = require ("first.tiledmap")
 
 --function math.getAngle(x1,y1, x2,y2) return math.atan2(x2-x1, y2-y1) end
 
@@ -17,32 +18,48 @@ function love.keypressed(key)
 end
 
 game = {}
+game.view = {x=400, y=300}
 
 function game.keydown(key)
 
 	if key == 'w' then
-		character.y = character.y -1
+		character.y = character.y -character.speed
 	end
 	
 	if key == 's' then
-		character.y = character.y +1
+		character.y = character.y +character.speed
 	end
 
 	if key == 'a' then
-		character.x = character.x -1
+		character.x = character.x -character.speed
 	end
 	
 	if key == 'd' then
-		character.x = character.x +1
+		character.x = character.x +character.speed
 	end
 end
 
 game.projectiles = {}
 
+function game.isWalkableTile(x,y) 
+	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, 400, 300)
+	local tiletype = TiledMap_GetMapTile(tx, ty, 1)
+	--FIXME magic tile type
+	if 10 == tiletype then
+		return true 
+	else return false end
+end
+
 function game.handleMouse(character, angle)
+
 	if love.mouse.isDown('l') then
-		character.x = character.x + 1 * math.sin(angle)
-		character.y = character.y - 1 * math.cos(angle)
+		local x = character.x + character.speed * math.sin(angle)
+		local y = character.y - character.speed * math.cos(angle)
+		
+		if (game.isWalkableTile(x,y)) then
+			character.x = x
+			character.y = y
+		end
 
 	end
 
@@ -84,14 +101,16 @@ function game.collision(creature, projectile)
 	return false
 end
 
-function love.load()
-	love.mouse.setVisible(false)
-	canvas = love.graphics.newCanvas()
-	image = love.graphics.newImage('gfx/testi.png')	
-	image:setFilter('linear', 'nearest')
-	variable = 0
-	-- title = love.graphics.getCaption()
-	title = "loverogue"
+function game.setupCharacter() 
+	local objects = TiledMap_Objects("tiled/test.tmx")
+	for k, object in pairs(objects) do 
+		if object.name == "Start" then
+			character.x = object.x + object.width/2 + 6
+			character.y = object.y + object.height/2 + 6
+		end
+	end
+	game.tiledobjects = objects
+
 	character.gfx = love.graphics.newCanvas(12,12)
 	character.gfx:renderTo(function()
 		r, g, b, a = love.graphics.getColor()
@@ -100,13 +119,27 @@ function love.load()
 		love.graphics.setColor(r, g, b, a)	
 		love.graphics.line(5,1, 6,2)
 	end)
-	character.x = 30
-	character.y = 30
 	character.loot = 0
+	character.speed = 1.3
+	return character
+end
 
+game.tiledobjects = {}
+
+function love.load()
+	love.mouse.setVisible(false)
+	canvas = love.graphics.newCanvas()
+	image = love.graphics.newImage('gfx/testi.png')	
+	image:setFilter('linear', 'nearest')
+	variable = 0
+	-- title = love.graphics.getCaption()
+	title = "loverogue"
+	TiledMap_Load("tiled/test.tmx", 33)
+
+	game.setupCharacter()
 	for i = 1, 30, 1 do
-		game.createCreature(math.random(740), math.random(540), 1/i,  math.random(10, 30), math.random(5, 60))
-		game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
+		game.createCreature(math.random(740), math.random(540), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
+	--	game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
 	end
 end
 
@@ -114,16 +147,21 @@ end
 function love.draw()
 	canvas:clear();
 	canvas:renderTo(function()
+		TiledMap_DrawNearCam(love.graphics.getWidth()/2,love.graphics.getHeight()/2)
 		r, g, b, a = love.graphics.getColor()
 		love.graphics.draw(image, 400, 300, variable, 8, 8, 8, 8 )
 		love.graphics.setColor(128, 128, 255, 225)
 		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
+		--background for top bar
+		love.graphics.setColor(0,0,0,255)
+		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
+
 		love.graphics.setColor(255,255,0,255)
 		for i = 1, #game.loot do
 			love.graphics.circle('fill', game.loot[i].x, game.loot[i].y, 3+game.loot[i].value*2, 8-game.loot[i].value)
 		end
-		love.graphics.print("Loot: " .. character.loot, 10, 10)
+		love.graphics.print("Loot: " .. character.loot, 10, 3)
 
 		love.graphics.setColor(255, 0, 0, 225)
 		for i = 1, #game.creatures do 
@@ -189,8 +227,12 @@ function love.draw()
 			game.creatures[i].direction = (math.random()*math.pi ) 
 			game.creatures[i].speed = 1.0
 		end
-		game.creatures[i].x = game.creatures[i].x + crtr.speed * math.sin(game.creatures[i].direction)
-		game.creatures[i].y = game.creatures[i].y + crtr.speed * math.cos(game.creatures[i].direction)
+		local crx = game.creatures[i].x + crtr.speed * math.sin(game.creatures[i].direction)
+		local cry = game.creatures[i].y + crtr.speed * math.cos(game.creatures[i].direction)
+		if game.isWalkableTile(crx +crtr.size /2, cry + crtr.size/2) then
+			game.creatures[i].x = crx
+			game.creatures[i].y = cry
+		end
 		if (game.creatures[i].x < 0 or game.creatures[i].y < 0) or 
 			(game.creatures[i].x +crtr.size > 800 or game.creatures[i].y + crtr.size > 600) then 
 			game.creatures[i].direction = game.creatures[i].direction * -1
@@ -214,6 +256,18 @@ function love.draw()
 			if (3 > math.dist(chr.x, chr.y, loot.x, loot.y)) then
 				character.loot = chr.loot +  loot.value
 				table.remove(game.loot, i)
+			end
+		end
+	end
+	--- check if player is in end area
+	for i = 1, #game.tiledobjects do
+		local object = game.tiledobjects[i]
+		if object.name == "WayDown" then
+			if character.x > tonumber(object.x) and character.y > tonumber(object.y) and 
+				character.x < object.x + object.width and 
+				character.y < object.y + object.height then
+				--Todo: go to next level
+				love.event.push("quit")
 			end
 		end
 	end
