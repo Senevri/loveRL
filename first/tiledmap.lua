@@ -236,19 +236,35 @@ local function getLayers(node)
     return layers
 end
 
-function TiledMap_Objects(filename)
+function TiledMap_Objects(filename, objectname)
 	local xml = LoadXML(love.filesystem.read(filename))
 	local objects = {}
 	for k, sub in ipairs(xml[2]) do
 		if (sub.label == "objectgroup") then 
 			print ("found objectgroup")
-			for l, child in ipairs(sub) do				
-				table.insert(objects, child.xarg)
+			for l, child in ipairs(sub) do
+				if objectname == nil then 
+					table.insert(objects, child.xarg)
+				else
+					if child.xarg.name == objectname then 					
+						table.insert(objects, child.xarg)
+					end
+				end
 			end
 		end
 	end
 	return objects
 end
+
+function TiledMap_Object(objectname, objects) 
+	for k, v in pairs(objects) do 
+		if v.name == objectname then
+			return v
+		end
+	end
+	return nil
+end
+
 
 function TiledMap_Parse(filename)
     local xml = LoadXML(love.filesystem.read(filename))

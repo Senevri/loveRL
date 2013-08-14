@@ -21,21 +21,27 @@ game = {}
 game.view = {x=400, y=300}
 
 function game.keydown(key)
+	local x = character.x
+	local y = character.y
 
 	if key == 'w' then
-		character.y = character.y -character.speed
+		y = character.y -character.speed
 	end
 	
 	if key == 's' then
-		character.y = character.y +character.speed
+		y = character.y +character.speed
 	end
 
 	if key == 'a' then
-		character.x = character.x -character.speed
+		x = character.x -character.speed
 	end
 	
 	if key == 'd' then
-		character.x = character.x +character.speed
+		x = character.x +character.speed
+	end
+	if game.isWalkableTile(x,y) then
+		character.x = x
+		character.y = y
 	end
 end
 
@@ -120,7 +126,7 @@ function game.setupCharacter()
 		love.graphics.line(5,1, 6,2)
 	end)
 	character.loot = 0
-	character.speed = 1.3
+	character.speed = 1.5
 	return character
 end
 
@@ -134,13 +140,26 @@ function love.load()
 	variable = 0
 	-- title = love.graphics.getCaption()
 	title = "loverogue"
-	TiledMap_Load("tiled/test.tmx", 33)
-
+	TiledMap_Load("tiled/test.tmx", 32)
 	game.setupCharacter()
-	for i = 1, 30, 1 do
-		game.createCreature(math.random(740), math.random(540), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
-	--	game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
-	end
+
+	for key, object in pairs(game.tiledobjects) do 
+		local spawnarea = nil
+		if object.name == "SpawnArea" then 
+			spawnarea = object
+			for k, v in pairs(spawnarea) do
+				print (k, v) 
+			end
+			for i = 1, 10, 1 do
+				game.createCreature(spawnarea.x + math.random(spawnarea.width), 
+						spawnarea.y + math.random(spawnarea.height), 
+						math.pi * i/30,  
+						math.random(10, 30), math.random(5, 60))
+			--	game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
+			end
+		end
+	end	
+
 end
 
 
@@ -221,7 +240,7 @@ function love.draw()
 		if (math.random() < 0.020 and 150 > math.dist(crtr.x, crtr.y, character.x, character.y)) then 
 			game.creatures[i].direction = math.getAngle(crtr.x, crtr.y, character.x, character.y)
 			--print (game.creatures[i].direction)
-			game.creatures[i].speed = 2.5
+			game.creatures[i].speed = 2.2
 		end	
 		if (math.random() < 0.010) then
 			game.creatures[i].direction = (math.random()*math.pi ) 
@@ -253,7 +272,7 @@ function love.draw()
 			if nil == game.loot[i] then break end
 			local chr = character
 			local loot = game.loot[i]
-			if (3 > math.dist(chr.x, chr.y, loot.x, loot.y)) then
+			if ((3+loot.value) > math.dist(chr.x, chr.y, loot.x+1+loot.value, loot.y+1+loot.value)) then
 				character.loot = chr.loot +  loot.value
 				table.remove(game.loot, i)
 			end
