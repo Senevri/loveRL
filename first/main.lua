@@ -85,7 +85,7 @@ end
 game.creatures = {}
 
 function game.createCreature(x,y,direction,size, health) 
-	local creature = {x=x, y=y, direction=direction, size=size, health=health, speed=1.5}
+	local creature = {x=x, y=y, direction=direction, size=size, health=health, speed=1.5, damage=0.5}
 	table.insert(game.creatures, creature)
 end
 
@@ -125,8 +125,14 @@ function game.setupCharacter()
 		love.graphics.setColor(r, g, b, a)	
 		love.graphics.line(5,1, 6,2)
 	end)
+	local image = love.graphics.newImage('gfx/testi.png')	
+	image:setFilter('linear', 'nearest')
+	character.gfx = image
 	character.loot = 0
 	character.speed = 1.5
+	character.health = 10
+	character.attack = 1
+	character.invincibility = 0
 	return character
 end
 
@@ -168,7 +174,7 @@ function love.draw()
 	canvas:renderTo(function()
 		TiledMap_DrawNearCam(love.graphics.getWidth()/2,love.graphics.getHeight()/2)
 		r, g, b, a = love.graphics.getColor()
-		love.graphics.draw(image, 400, 300, variable, 8, 8, 8, 8 )
+		love.graphics.draw(image, 740, 64, variable, 4, 4, 8, 8 )
 		love.graphics.setColor(128, 128, 255, 225)
 		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
@@ -181,6 +187,9 @@ function love.draw()
 			love.graphics.circle('fill', game.loot[i].x, game.loot[i].y, 3+game.loot[i].value*2, 8-game.loot[i].value)
 		end
 		love.graphics.print("Loot: " .. character.loot, 10, 3)
+
+		love.graphics.setColor(255, 0, 0, 225)
+		love.graphics.print("Health: " .. character.health, 100, 3)
 
 		love.graphics.setColor(255, 0, 0, 225)
 		for i = 1, #game.creatures do 
@@ -226,16 +235,32 @@ function love.draw()
 	character = game.handleMouse(character, angle)
 
 	--love.graphics.print(math .. "\0", 0, 0)
-	love.graphics.draw(character.gfx, character.x, character.y, angle, 1, 1, 6, 6)
+	love.graphics.draw(character.gfx, character.x, character.y, angle - math.pi/2, 1, 1, (character.gfx:getHeight()/2), (character.gfx:getWidth()/2))
 	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
 	variable = variable + 0.05
 	if variable == 1 then
 		variable = 0
 	end
 
+	if character.invincibility > 0 then 
+		character.invincibility = character.invincibility - 1
+	end
+
 	for i = 1, #game.creatures do
 		if nil == game.creatures[i] then break end
 		local crtr = game.creatures[i]
+		
+		-- take player health on collision 
+		if math.dist(crtr.x + crtr.size/2, crtr.y + crtr.size/2, character.x + 6, character.y+6) < (crtr.size/2 + 6) and
+			character.invincibility == 0 then
+			character.health = character.health - crtr.damage
+			crtr.speed = 0 
+			character.invincibility = 30
+		else
+		end
+
+
+
 		-- go towards player
 		if (math.random() < 0.020 and 150 > math.dist(crtr.x, crtr.y, character.x, character.y)) then 
 			game.creatures[i].direction = math.getAngle(crtr.x, crtr.y, character.x, character.y)
@@ -278,6 +303,7 @@ function love.draw()
 			end
 		end
 	end
+
 	--- check if player is in end area
 	for i = 1, #game.tiledobjects do
 		local object = game.tiledobjects[i]
@@ -289,6 +315,12 @@ function love.draw()
 				love.event.push("quit")
 			end
 		end
+	end
+
+	--- check if player dead
+	if character.health <= 0 then
+		--fixme make proper
+		love.event.push("quit") 
 	end
 
 end
