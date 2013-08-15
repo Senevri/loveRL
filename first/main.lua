@@ -1,3 +1,10 @@
+--[[
+	First LÖVE2d Game. 
+	Author: Esa Karjalainen
+	(esa.karjalainen (at) gmail.com)
+	Tiled maps, Diablolike
+]]--
+
 local math = require ("first.math")
 local tiled = require ("first.tiledmap")
 
@@ -14,6 +21,14 @@ function love.keypressed(key)
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
       		love.mouse.setVisible(state)
    	end
+
+	if key == "1" then
+		character.attack.damage = character.attack.damage + 0.5 
+	end
+
+	if key == "2" then
+		character.attack.range = character.attack.range + 0.5 
+	end
 	print( key)
 end
 
@@ -131,7 +146,7 @@ function game.setupCharacter()
 	character.loot = 0
 	character.speed = 1.5
 	character.health = 10
-	character.attack = 1
+	character.attack = {damage=1, range=2}
 	character.invincibility = 0
 	return character
 end
@@ -175,7 +190,7 @@ function love.draw()
 		TiledMap_DrawNearCam(love.graphics.getWidth()/2,love.graphics.getHeight()/2)
 		r, g, b, a = love.graphics.getColor()
 		love.graphics.draw(image, 740, 64, variable, 4, 4, 8, 8 )
-		love.graphics.setColor(128, 128, 255, 225)
+		love.graphics.setColor(0, 255, 0, 250)
 		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
 		--background for top bar
@@ -210,11 +225,11 @@ function love.draw()
 				break
 			end		
 
-			if prjctl.age > 60 then
+			if prjctl.age > character.attack.range*10 then
 				table.remove(game.projectiles, i)
 			else
 				game.projectiles[i].age = game.projectiles[i].age + 1
-				love.graphics.circle('fill', prjctl.x, prjctl.y, 5,5)
+				love.graphics.circle('fill', prjctl.x, prjctl.y, 5+character.attack.damage,5)
 				game.projectiles[i].x = prjctl.x + 4*math.sin(prjctl.direction)
 				game.projectiles[i].y = prjctl.y - 4*math.cos(prjctl.direction)
 			end
@@ -287,7 +302,7 @@ function love.draw()
 			if game.collision(game.creatures[i], game.projectiles[j]) then 
 				table.remove(game.projectiles, j)
 				--print (game.creatures[i])
-				game.creatures[i].health = game.creatures[i].health- 1
+				game.creatures[i].health = game.creatures[i].health-character.attack.damage
 			end
 		end
 	end
