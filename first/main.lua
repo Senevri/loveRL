@@ -34,6 +34,11 @@ function love.keypressed(key)
 end
 
 function love.load()
+	--load sounds
+	game.sfx["attack"] = love.audio.newSource("sfx/shoot.wav", static)
+	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
+	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
+
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
 	image = love.graphics.newImage('gfx/testi.png')	
@@ -104,6 +109,13 @@ function love.draw()
 		love.graphics.setColor(255, 0, 0, 225)
 		love.graphics.print("Health: " .. character.health, 100, 3)
 
+		love.graphics.setColor(255, 0, 255, 225)
+
+		love.graphics.print("Attack: " .. character.attack.damage, 200, 3)
+		love.graphics.print("Range: " .. character.attack.range, 300, 3)
+
+		love.graphics.print("Speed: " .. character.speed, 400, 3)
+
 		love.graphics.setColor(255, 0, 0, 225)
 		for i = 1, #game.creatures do 
 			crtr = game.creatures[i]
@@ -172,6 +184,7 @@ function love.draw()
 			character.health = character.health - crtr.damage
 			crtr.speed = 0 
 			character.invincibility = 30
+			love.audio.play(game.sfx.hurt)
 		else
 		end
 
@@ -217,6 +230,7 @@ function love.draw()
 			if ((3+loot.value) > math.dist(chr.x, chr.y, loot.x+1+loot.value, loot.y+1+loot.value)) then
 				character.loot = chr.loot +  loot.value
 				table.remove(game.loot, i)
+				love.audio.play(game.sfx.pickup_loot)
 			end
 		end
 	end

@@ -2,7 +2,7 @@
 --
 
 local game = {}
-game.view = {x=400, y=300, xratio = 1, yratio = 1}
+game.view = {x=400, y=276, xratio = 1, yratio = 1}
 
 
 function game.keydown(key, character)
@@ -43,6 +43,8 @@ function game.isWalkableTile(x,y)
 	else return false end
 end
 
+game.sfxplaying = false
+
 function game.handleMouse(character, angle)
 
 	if love.mouse.isDown('l') then
@@ -58,6 +60,9 @@ function game.handleMouse(character, angle)
 
 	if love.mouse.isDown('r') then
 		game.createProjectile(character.x, character.y, character.direction)
+		--love.audio.play(game.sfx.attack)
+		game.sfx.attack:stop()
+		game.sfx.attack:play()
 	end
 
 	return character
@@ -119,6 +124,7 @@ function game.setupCharacter()
 	local image = love.graphics.newImage('gfx/testi.png')	
 	image:setFilter('linear', 'nearest')
 	character.gfx = image
+	character.area = nil
 	character.loot = 0
 	character.speed = 1.5
 	character.health = 6
@@ -128,5 +134,7 @@ function game.setupCharacter()
 end
 
 game.tiledobjects = {}
+
+game.sfx = {}
 
 return game

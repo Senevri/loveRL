@@ -32,7 +32,11 @@ function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix
 		local startpoint = 2
 		local endpoint = 3
 		startpoint, endpoint = string.find(string.reverse(path), spritepath_removeold )
+		if nil == endpoint then
+			path = spritepath_prefix .. path
+		else 
 		path = spritepath_prefix .. string.sub(path, string.len(path) - (endpoint-1))
+		end
 		local raw = love.image.newImageData(path)
         local w,h = raw:getWidth(),raw:getHeight()
         local gid = first_gid
