@@ -13,30 +13,45 @@ local max = math.max
 local min = math.min
 local abs = math.abs
 gTileMap_LayerInvisByName = {}
+gTileGfx = {}
+   
 
-function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix)
+-- s for spacing
+function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix, m, s)
+	if nil == m then m = 0 end
+	if nil == s then s = 0 end
     spritepath_removeold = spritepath_removeold or "../"
     spritepath_prefix = spritepath_prefix or ""
     kTileSize = tilesize or kTileSize or 32
-    gTileGfx = {}
-   
+    
     local tiletype,layers = TiledMap_Parse(filepath)
     gMapLayers = layers
     for first_gid,path in pairs(tiletype) do
-        path = spritepath_prefix .. string.gsub(path,"^"..string.gsub(spritepath_removeold,"%.","%%."),"")
-        local raw = love.image.newImageData(path)
+        --path = spritepath_prefix .. string.gsub(path,"^"..string.gsub(spritepath_removeold,"%.","%%."),"")
+		print (spritepath_removeold, path)
+		local startpoint = 2
+		local endpoint = 3
+		startpoint, endpoint = string.find(string.reverse(path), spritepath_removeold )
+		path = spritepath_prefix .. string.sub(path, string.len(path) - (endpoint-1))
+		local raw = love.image.newImageData(path)
         local w,h = raw:getWidth(),raw:getHeight()
         local gid = first_gid
         local e = kTileSize
         for y=0,floor(h/kTileSize)-1 do
         for x=0,floor(w/kTileSize)-1 do
             local sprite = love.image.newImageData(kTileSize,kTileSize)
-            sprite:paste(raw,0,0,x*e,y*e,e,e)
+            sprite:paste(raw,0,0,m + x*(e+s),m + y*(e+s),e,e)
             gTileGfx[gid] = love.graphics.newImage(sprite)
             gid = gid + 1
         end
         end
     end
+	gTileGfx = gTileGfx
+end
+
+function TiledMap_GetTileByGid(gid)	
+	local image = gTileGfx[tonumber(gid)]
+	return image
 end
 
 function TiledMap_GetMapW () return gMapLayers.width end

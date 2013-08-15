@@ -33,7 +33,8 @@ function love.keypressed(key)
 end
 
 game = {}
-game.view = {x=400, y=300}
+game.view = {x=400, y=300, xratio = 1, yratio = 1}
+
 
 function game.keydown(key)
 	local x = character.x
@@ -63,7 +64,7 @@ end
 game.projectiles = {}
 
 function game.isWalkableTile(x,y) 
-	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, 400, 300)
+	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, game.view.x, game.view.y)
 	local tiletype = TiledMap_GetMapTile(tx, ty, 1)
 	--FIXME magic tile type
 	if 10 == tiletype then
@@ -124,7 +125,10 @@ end
 
 function game.setupCharacter() 
 	local objects = TiledMap_Objects("tiled/test.tmx")
-	for k, object in pairs(objects) do 
+	for k, object in pairs(objects) do
+		print(object.name, object.x, object.y)
+		objects[k].x = object.x - game.view.x + (love.graphics.getWidth()/2 )
+		objects[k].y = object.y - game.view.y + (love.graphics.getHeight()/2 )
 		if object.name == "Start" then
 			character.x = object.x + object.width/2 + 6
 			character.y = object.y + object.height/2 + 6
@@ -145,8 +149,8 @@ function game.setupCharacter()
 	character.gfx = image
 	character.loot = 0
 	character.speed = 1.5
-	character.health = 10
-	character.attack = {damage=1, range=2}
+	character.health = 6
+	character.attack = {damage=1, range=1}
 	character.invincibility = 0
 	return character
 end
@@ -161,7 +165,11 @@ function love.load()
 	variable = 0
 	-- title = love.graphics.getCaption()
 	title = "loverogue"
-	TiledMap_Load("tiled/test.tmx", 32)
+	local tilesize = 32
+	TiledMap_Load("tiled/test.tmx", tilesize, '/', "tiled/", 1, 1)
+	game.view.xratio = love.graphics.getWidth() / (TiledMap_GetMapW() * tilesize )
+	game.view.yratio = love.graphics.getHeight() / (TiledMap_GetMapH() * tilesize )
+	print (game.view.xratio, game.view.yratio)
 	game.setupCharacter()
 
 	for key, object in pairs(game.tiledobjects) do 
@@ -180,14 +188,13 @@ function love.load()
 			end
 		end
 	end	
-
 end
 
 
 function love.draw()
 	canvas:clear();
 	canvas:renderTo(function()
-		TiledMap_DrawNearCam(love.graphics.getWidth()/2,love.graphics.getHeight()/2)
+		TiledMap_DrawNearCam(game.view.x,game.view.y)
 		r, g, b, a = love.graphics.getColor()
 		love.graphics.draw(image, 740, 64, variable, 4, 4, 8, 8 )
 		love.graphics.setColor(0, 255, 0, 250)
@@ -198,6 +205,17 @@ function love.draw()
 		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
 
 		love.graphics.setColor(255,255,0,255)
+
+		for i = 1, #game.tiledobjects do 
+			local to = game.tiledobjects[i]
+			if nil ~= to.gid then 
+				local tileimage = TiledMap_GetTileByGid(to.gid)
+				if nil ~= tileimage then 
+					love.graphics.draw(tileimage, to.x, to.y, 0, 1, 1, 0, 0 ) 
+				end
+			end
+		end
+
 		for i = 1, #game.loot do
 			love.graphics.circle('fill', game.loot[i].x, game.loot[i].y, 3+game.loot[i].value*2, 8-game.loot[i].value)
 		end
@@ -293,7 +311,8 @@ function love.draw()
 			game.creatures[i].y = cry
 		end
 		if (game.creatures[i].x < 0 or game.creatures[i].y < 0) or 
-			(game.creatures[i].x +crtr.size > 800 or game.creatures[i].y + crtr.size > 600) then 
+			(game.creatures[i].x +crtr.size > love.graphics.getWidth() or 
+			game.creatures[i].y + crtr.size > love.graphics.getHeight()) then 
 			game.creatures[i].direction = game.creatures[i].direction * -1
 		end
 

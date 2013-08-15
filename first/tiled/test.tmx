@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="25" height="18" tilewidth="32" tileheight="32">
  <tileset firstgid="1" name="tmw_desert_spacing" tilewidth="32" tileheight="32" spacing="1" margin="1">
-  <image source="tiled/tmw_desert_spacing.png" width="265" height="199"/>
+  <image source="C:/Program Files (x86)/Tiled/examples/tmw_desert_spacing.png" width="265" height="199"/>
  </tileset>
  <layer name="Tile Layer 1" width="25" height="18">
   <data>
@@ -459,13 +459,13 @@
  </layer>
  <objectgroup name="Object Layer 1" width="25" height="18">
   <object name="WayDown" x="713" y="438" width="68" height="84"/>
-  <object name="Start" x="49" y="40" width="39" height="41"/>
-  <object name="SpawnArea" x="259" y="126" width="288" height="57">
+  <object name="Start" x="44" y="45" width="39" height="41"/>
+  <object name="SpawnArea" x="278" y="128" width="288" height="57">
    <properties>
     <property name="Count" value="10"/>
    </properties>
   </object>
-  <object name="SpawnArea" x="34" y="450" width="286" height="64"/>
+  <object name="SpawnArea" x="53" y="434" width="286" height="64"/>
  </objectgroup>
  <layer name="cosmetic tiles" width="25" height="18">
   <data>
@@ -921,4 +921,7 @@
    <tile gid="0"/>
   </data>
  </layer>
+ <objectgroup name="Object Layer 2" width="25" height="18">
+  <object name="yay image" gid="40" x="783" y="431"/>
+ </objectgroup>
 </map>
