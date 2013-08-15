@@ -145,7 +145,7 @@ function love.draw()
 		end
 
 
-		love.graphics.setColor(0, 0, 255, 128)
+		love.graphics.setColor(0, 192, 255, 160)
 		for i = 1, #game.projectiles do
 			local prjctl = game.projectiles[i]
 			if prjctl == nil then
