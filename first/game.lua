@@ -43,7 +43,7 @@ function game.isWalkableTile(x,y)
 	else return false end
 end
 
-game.sfxplaying = false
+game.sfxplaying = 0
 
 function game.handleMouse(character, angle)
 
@@ -61,8 +61,13 @@ function game.handleMouse(character, angle)
 	if love.mouse.isDown('r') then
 		game.createProjectile(character.x, character.y, character.direction)
 		--love.audio.play(game.sfx.attack)
-		game.sfx.attack:stop()
-		game.sfx.attack:play()
+		if game.sfxplaying > 0 then
+			game.sfxplaying = game.sfxplaying -1
+		else
+			game.sfx.attack:stop()
+			game.sfx.attack:play()
+			game.sfxplaying = 6
+		end
 	end
 
 	return character

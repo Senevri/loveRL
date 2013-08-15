@@ -22,14 +22,31 @@ function love.keypressed(key)
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
       		love.mouse.setVisible(state)
    	end
+	if character.area == "Shop" then 
+	
+		if key == "1" and 
+			character.loot >= ((character.attack.damage+0.5) * 4) 
+			then
+			character.attack.damage = character.attack.damage + 0.5
+			character.loot = character.loot - character.attack.damage * 4
+		end
 
-	if key == "1" then
-		character.attack.damage = character.attack.damage + 0.5 
+		if key == "2" and 
+			character.loot >= ((character.attack.range+0.5) * 4) 
+			then
+			character.attack.range = character.attack.range + 0.5 
+			character.loot = character.loot - character.attack.range * 4
+		end
+
+		if key == "3" and 
+			character.loot >= ((character.speed+0.5) * 4) 
+			then
+
+			character.speed = character.speed + 0.5 
+			character.loot = character.loot - character.speed * 4
+		end
 	end
 
-	if key == "2" then
-		character.attack.range = character.attack.range + 0.5 
-	end
 	print( key)
 end
 
@@ -97,7 +114,7 @@ function love.draw()
 				if nil ~= tileimage then 
 					love.graphics.draw(tileimage, to.x, to.y, 0, 1, 1, 0, tileimage:getHeight() ) 
 				end
-			end
+			end			
 		end
 
 		love.graphics.setColor(255,255,0,255)
@@ -184,7 +201,8 @@ function love.draw()
 			character.health = character.health - crtr.damage
 			crtr.speed = 0 
 			character.invincibility = 30
-			love.audio.play(game.sfx.hurt)
+			game.sfx.hurt:stop()
+			game.sfx.hurt:play()
 		else
 		end
 
@@ -230,21 +248,26 @@ function love.draw()
 			if ((3+loot.value) > math.dist(chr.x, chr.y, loot.x+1+loot.value, loot.y+1+loot.value)) then
 				character.loot = chr.loot +  loot.value
 				table.remove(game.loot, i)
-				love.audio.play(game.sfx.pickup_loot)
+				game.sfx.pickup_loot:stop()
+				game.sfx.pickup_loot:play()
 			end
 		end
 	end
 
 	--- check if player is in end area
 	for i = 1, #game.tiledobjects do
+		character.area = nil
 		local object = game.tiledobjects[i]
-		if object.name == "WayDown" then
-			if character.x > tonumber(object.x) and character.y > tonumber(object.y) and 
-				character.x < object.x + object.width and 
-				character.y < object.y + object.height then
-				--Todo: go to next level
-				love.event.push("quit")
-			end
+		if character.x > tonumber(object.x) and character.y > tonumber(object.y) and 
+			character.x < object.x + object.width and 
+			character.y < object.y + object.height then
+			character.area = object.name
+		end
+
+
+		if character.area == "WayDown" then
+			--Todo: go to next level
+			love.event.push("quit")
 		end
 	end
 
