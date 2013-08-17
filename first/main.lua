@@ -5,10 +5,28 @@
 	Tiled maps, Diablolike
 ]]--
 
+--[[
+--	Todo:
+--	Specific Monsters:
+--	 - Small
+--	 - Medium
+--	 - Large
+--	 - Boss
+--	Animations
+--	Traps
+--	Monster AI
+--
+--	Done:
+]]--
+
 local math = require ("first.math")
-local tiled = require ("first.tiledmap")
+local tiled = require ("libs.tiledmap") -- customized
 
 local game = require("first.game")
+
+local AL = require("libs.AnAL")
+-- external library, consider using. 
+--HC = require 'HardonCollider'
 
 --function math.getAngle(x1,y1, x2,y2) return math.atan2(x2-x1, y2-y1) end
 
@@ -17,6 +35,9 @@ character = {}
 function love.keypressed(key)
 	if key ==  'escape' then
 		love.event.push('quit')
+	end
+	if key ==  'return' then
+		game.paused = not game.paused
 	end
 	if key == "tab" then
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
@@ -50,6 +71,7 @@ function love.keypressed(key)
 	--for testing
 	if game.testing == false then return end
 	if key == "f1" then 
+		game.paused = false
 		character.health = character.health +1
 		game.levels.next()
 		if nil ~=  game.levels.currentlevel then 
@@ -61,6 +83,7 @@ function love.keypressed(key)
 end
 
 marker = nil
+crgfx = {}
 
 function love.load()
 	--load sounds
@@ -72,6 +95,12 @@ function love.load()
 	canvas = love.graphics.newCanvas()
 	image = love.graphics.newImage('gfx/testi.png')	
 	image:setFilter('linear', 'nearest')
+
+	for i, filename in ipairs(game.crgfx) do 
+		table.insert(crgfx, love.graphics.newImage(filename))
+		--crgfx[i]:setFilter('linear', 'nearest')
+	end
+
 	variable = 0
 	-- title = love.graphics.getCaption()
 	title = "loverogue"
@@ -95,25 +124,60 @@ function love.load()
 		--love.graphics.line(5,1, 6,2)
 	end)
 
+	splash = love.graphics.newImage("gfx/splash.png")
+	splash:setFilter('linear', 'nearest')
+
+	--love.graphics.draw(splash, 0, 0, 0, sw/love.graphics.getWidth(), sh/love.graphics.getHeight())
+	game.paused = true
 end
 
 
 
 function love.draw()	
 
+	local screenw = love.graphics.getWidth()
+	local screenh = love.graphics.getHeight()
+	if game.paused then 
+		local sw, sh, aspect,screenaspect
+		sw = splash:getWidth()
+		sh = splash:getHeight()
+	
+		aspect = sw/sh
+		screenaspect = screenw/screenh
+
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.draw(splash, screenw/2,screenh/2, 0, 
+			love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
+			sw/2, sh/2)
+		return 
+	end
+
 	if love.graphics.getWidth() < (2*game.view.x) then 
 		game.view.x = character.x
 		game.view.y = character.y
 	end
-	TiledMap_DrawNearCam(game.view.x,game.view.y)
 	r, g, b, a = love.graphics.getColor()
-	love.graphics.draw(image, 740, 64, variable, 4, 4, 8, 8 )
-	love.graphics.setColor(0, 255, 0, 250)
-	love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
 	--background for top bar
 	love.graphics.setColor(0,0,0,255)
 	love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
+
+	love.graphics.setColor(255,255,255,255)
+	--TiledMap_DrawNearCam(game.view.x,game.view.y)
+	TiledMap_DrawNearCam(game.view.x,game.view.y)
+	local rsize = 16
+	local mul = {1, 2, 4, 8}
+	for i, img in ipairs(crgfx) do
+	love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
+	end
+
+	variable = variable + 0.01
+	if variable == 1 then
+		variable = 0
+	end
+	love.graphics.setColor(0, 255, 0, 250)
+	love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
+
 
 	love.graphics.setColor(r, g, b, a)
 
@@ -279,10 +343,6 @@ function love.draw()
 	love.graphics.draw(marker, character.x, character.y, angle + math.halfPI, 1, 1, (marker:getHeight()/2), (marker:getWidth()/2))
 	love.graphics.setColor(r,g,b,a)
 	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
-	variable = variable + 0.05
-	if variable == 1 then
-		variable = 0
-	end
 
 	--- check if player dead
 	if character.health <= 0 then

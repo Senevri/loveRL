@@ -3,8 +3,6 @@
 --
 ]]--
 
--- external library, consider using. 
---HC = require 'HardonCollider'
 
 local game = {}
 
@@ -94,6 +92,13 @@ end
 
 -- TODO: Distinct creatures
 game.creatures = {}
+
+game.crgfx = {
+	"gfx/spidercreature_320.png",
+	"gfx/goblincreature_320.png",
+	"gfx/colossuscreature_320.png",
+	"gfx/bosscreature_320.png",
+}
 
 function game.createCreature(x,y,direction,size, health) 
 	local creature = {x=x, y=y, direction=direction, size=size, health=health, speed=1.5, damage=0.5}
