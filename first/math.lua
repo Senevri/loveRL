@@ -11,12 +11,13 @@ end
 function math.dist(x1,y1, x2,y2) 
 	return ((x2-x1)^2+(y2-y1)^2)^0.5 
 end
+
 -- Distance between two 3D points:
 function math.dist3d(x1,y1,z1, x2,y2,z2) return ((x2-x1)^2+(y2-y1)^2+(z2-z1)^2)^0.5 end
 
 
 -- Returns the angle between two points.
-function math.getAngle(x1,y1, x2,y2) return math.atan2(x2-x1, y2-y1) end
+function math.getAngle(x1,y1, x2,y2) return (math.halfPI - math.atan2(x2-x1, y2-y1)) end
 
 
 -- Returns the closest multiple of 'size' (defaulting to 10).
@@ -32,6 +33,13 @@ function math.normalize(x,y) local l=(x*x+y*y)^.5 if l==0 then return 0,0,0 else
 -- Normalizes a table of numbers.
 function math.normalize(t) local n,m = #t,0 for i=1,n do m=m+t[i] end m=1/m for i=1,n do t[i]=t[i]*m end return t end
 
+math.halfPI = math.pi/2
+
+function math.translate(x, y, angle, distance) 
+	x = x + distance * math.cos(angle)
+	y = y + distance * math.sin(angle)
+	return x, y
+end
 
 -- Returns 'n' rounded to the nearest 'deci'th.
 function math.round(n, deci) deci = 10^(deci or 0) return math.floor(n*deci+.5)/deci end
