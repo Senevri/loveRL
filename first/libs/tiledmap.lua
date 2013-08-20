@@ -125,6 +125,12 @@ end
 function TiledMap_GetLayerZByName (layername) for z,layer in ipairs(gMapLayers) do if (layer.name == layername) then return z end end end
 function TiledMap_SetLayerInvisByName (layername) gTileMap_LayerInvisByName[layername] = true end
 
+function TiledMap_SetLayerVisibleByName (layername) 
+	if gTileMap_LayerInvisByName[layername] then
+		gTileMap_LayerInvisByName[layername] = false
+	end
+end
+
 function TiledMap_IsLayerVisible (z)
     local layer = gMapLayers[z]
     return layer and (not gTileMap_LayerInvisByName[layer.name or "?"])

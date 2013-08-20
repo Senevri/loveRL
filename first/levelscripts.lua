@@ -33,7 +33,7 @@ function scripts.default(character, condition, game)
 
 	else	
 		if (nil ~= character.area) then 
-			print ("in script. Area: " .. character.area)
+			-- print ("in script. Area: " .. character.area)
 		end
 		--- check if player is in area
 		for i ,to in ipairs(game.tiledobjects) do
@@ -77,7 +77,28 @@ function scripts.level2(character, condition, game)
 		end
 	end
 	return character, game
+end
 
+function scripts.bosslevel(character, condition, game) 
+	character, game = scripts.default(character, condition, game)
+
+	if condition == "init" then
+		TiledMap_SetLayerInvisByName("Hidden")
+	end
+
+	if nil ~= character.area and character.area == "ItemRoom" then 
+		--love.graphics.print (character.area, 700, 10)
+	end
+	for i, to in ipairs(game.tiledobjects) do 
+		--print(to.name)
+		character.area = game.getCharacterObjectArea(character, to)
+		if character.area == "ItemRoom" then 
+			love.graphics.print ("Found Secret Area!", 700, 10)
+			TiledMap_SetLayerVisibleByName("Hidden")	
+		end
+	end
+
+	return character, game
 end
 
 return scripts

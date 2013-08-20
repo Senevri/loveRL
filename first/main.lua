@@ -24,7 +24,7 @@ local tiled = require ("libs.tiledmap") -- customized
 
 local game = require("first.game")
 
-local AL = require("libs.AnAL")
+-- local AL = require("libs.AnAL")
 -- external library, consider using. 
 --HC = require 'HardonCollider'
 
@@ -103,7 +103,7 @@ function love.load()
 
 	variable = 0
 	-- title = love.graphics.getCaption()
-	title = "loverogue"
+	title = "loveRL"
 
 	character, game = game.loadLevelByIndex(1)
 

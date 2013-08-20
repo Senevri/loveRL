@@ -30,7 +30,7 @@ function game.keydown(key, character)
 	if key == 'd' then
 		x = character.x +character.speed
 	end
-	if game.isWalkableTile(x,y) then
+	if game.isWalkableTile(x,y) or game.isWalkableObject(x, y) then
 		character.x = x
 		character.y = y
 	end
@@ -38,26 +38,13 @@ function game.keydown(key, character)
 	return character
 end
 
-game.projectiles = {}
-
-function game.isWalkableTile(x,y) 
-	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, game.view.x, game.view.y)
-	local tiletype = TiledMap_GetMapTile(tx, ty, 1)
-	--FIXME magic tile type
-	if 10 == tiletype then
-		return true 
-	else return false end
-end
-
-game.sfxplaying = 0
-
 function game.handleMouse(character, angle)
 
 	if love.mouse.isDown('l') then
 		local x, y
 		x, y = math.translate(character.x, character.y, angle, character.speed)
 		
-		if (game.isWalkableTile(x,y)) then
+		if (game.isWalkableTile(x,y)) or game.isWalkableObject(x,y) then
 			character.x = x
 			character.y = y
 		end
@@ -83,6 +70,34 @@ function game.handleMouse(character, angle)
 
 	return character
 end
+
+
+
+game.projectiles = {}
+
+function game.isWalkableTile(x,y) 
+	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, game.view.x, game.view.y)
+	local tiletype = TiledMap_GetMapTile(tx, ty, 1)
+	--FIXME magic tile type
+	if 10 == tiletype then
+		return true 
+	else return false end
+end
+
+
+function game.isWalkableObject(x,y)
+	for i, obj in ipairs(game.tiledobjects) do 
+		-- for walkables, width and height exist -- 
+		if obj.type ~= nil and (obj.type == "walkable") then 
+			if (tonumber(obj.x) <= x) and (tonumber(obj.y) <= y) and ((obj.x + obj.width) >= x) and ((obj.y+obj.height) >= y) then
+				return true;
+			end
+		end
+	end
+	return false;
+end
+
+game.sfxplaying = 0
 
 function game.createProjectile(x, y, direction)
 	local projectile = {x = x, y = y, direction = direction, age = 0, speed=4, rate =30 }
@@ -111,6 +126,8 @@ function game.createLoot(x,y)
 	local loot = { x = x, y = y, value = math.random(5) }
 	table.insert(game.loot, loot)
 end
+
+-- let's test if this is universal -- 
 function game.collision(creature, projectile) 	
 	local size = creature.size / 2
 	local cx = creature.x + size
@@ -188,7 +205,7 @@ game.scripts = require("first.levelscripts")
 
 game.levels = { 
 	__items = {"tiled/level0.tmx", "tiled/test.tmx", "tiled/test2.tmx", "tiled/BossLevel.tmx"},
-	__functions = {nil, nil, game.scripts.level2},
+	__functions = {nil, nil, game.scripts.level2, game.scripts.bosslevel},
 	index = 0,
 	currentlevel = nil
 }
