@@ -84,6 +84,7 @@ function scripts.bosslevel(character, condition, game)
 
 	if condition == "init" then
 		TiledMap_SetLayerInvisByName("Hidden")
+		TiledMap_SetLayerInvisByName("Hidden2")
 	end
 
 	if nil ~= character.area and character.area == "ItemRoom" then 
@@ -95,6 +96,7 @@ function scripts.bosslevel(character, condition, game)
 		if character.area == "ItemRoom" then 
 			love.graphics.print ("Found Secret Area!", 700, 10)
 			TiledMap_SetLayerVisibleByName("Hidden")	
+			TiledMap_SetLayerVisibleByName("Hidden2")	
 		end
 	end
 

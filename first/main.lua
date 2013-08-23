@@ -15,6 +15,8 @@
 --	Animations
 --	Traps
 --	Monster AI
+--	Items
+--	Melee
 --
 --	Done:
 ]]--
@@ -24,7 +26,7 @@ local tiled = require ("libs.tiledmap") -- customized
 
 local game = require("first.game")
 
--- local AL = require("libs.AnAL")
+require("libs.AnAL")
 -- external library, consider using. 
 --HC = require 'HardonCollider'
 
@@ -93,8 +95,8 @@ function love.load()
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
-	image = love.graphics.newImage('gfx/testi.png')	
-	image:setFilter('linear', 'nearest')
+	--image = love.graphics.newImage('gfx/testi.png')	
+	--image:setFilter('linear', 'nearest')
 
 	for i, filename in ipairs(game.crgfx) do 
 		table.insert(crgfx, love.graphics.newImage(filename))
@@ -129,12 +131,16 @@ function love.load()
 
 	--love.graphics.draw(splash, 0, 0, 0, sw/love.graphics.getWidth(), sh/love.graphics.getHeight())
 	game.paused = true
+	game.setup()
 end
 
-
+function love.update(dt)
+	character.animation:update(dt)
+end
 
 function love.draw()	
-
+	character.portrait = game.portraits.default;
+	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
 	local screenh = love.graphics.getHeight()
 	if game.paused then 
@@ -158,28 +164,32 @@ function love.draw()
 	end
 	r, g, b, a = love.graphics.getColor()
 
+	local canvas = love.graphics.newCanvas(screenw, screenh);
 	--background for top bar
-	love.graphics.setColor(0,0,0,255)
-	love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
+	canvas:renderTo(function () 
+		love.graphics.setColor(0,0,0,255)
+		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
 
-	love.graphics.setColor(255,255,255,255)
-	--TiledMap_DrawNearCam(game.view.x,game.view.y)
-	TiledMap_DrawNearCam(game.view.x,game.view.y)
-	local rsize = 16
-	local mul = {1, 2, 4, 8}
-	for i, img in ipairs(crgfx) do
-	love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
-	end
+		love.graphics.setColor(255,255,255,255)
+		--TiledMap_DrawNearCam(game.view.x,game.view.y)
+		TiledMap_DrawNearCam(game.view.x,game.view.y)
+		local rsize = 16
+		local mul = {1, 2, 4, 8}
+		for i, img in ipairs(crgfx) do
+		love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
+		end
 
-	variable = variable + 0.01
-	if variable == 1 then
-		variable = 0
-	end
-	love.graphics.setColor(0, 255, 0, 250)
-	love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
+		variable = variable + 0.01
+		if variable == 1 then
+			variable = 0
+		end
+		love.graphics.setColor(0, 255, 0, 250)
+		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
 
-	love.graphics.setColor(r, g, b, a)
+		love.graphics.setColor(r, g, b, a)
+	end);
+	love.graphics.draw(canvas, 0, 0)
 
 	for i, to in  ipairs(game.tiledobjects) do 
 		--local to = game.tiledobjects[i]
@@ -218,18 +228,23 @@ function love.draw()
 			game.sfx.pickup_loot:play()
 		end
 	end
-	love.graphics.print("Loot: " .. character.loot, 10, 3)
+
+	canvas = love.graphics.newCanvas(screenw, screenh)
+	canvas:renderTo(function()
+		love.graphics.print("Loot: " .. character.loot, 10, 3)
 
 
-	love.graphics.setColor(255, 0, 0, 225)
-	love.graphics.print("Health: " .. character.health, 100, 3)
+		love.graphics.setColor(255, 0, 0, 225)
+		love.graphics.print("Health: " .. character.health, 100, 3)
 
-	love.graphics.setColor(255, 0, 255, 225)
+		love.graphics.setColor(255, 0, 255, 225)
 
-	love.graphics.print("Attack: " .. character.attack.damage, 200, 3)
-	love.graphics.print("Range: " .. character.attack.range, 300, 3)
+		love.graphics.print("Attack: " .. character.attack.damage, 200, 3)
+		love.graphics.print("Range: " .. character.attack.range, 300, 3)
 
-	love.graphics.print("Speed: " .. character.speed, 400, 3)
+		love.graphics.print("Speed: " .. character.speed, 400, 3)
+	end)
+	love.graphics.draw(canvas)
 
 	love.graphics.setColor(255, 0, 0, 225)
 	for i = 1, #game.creatures do 
@@ -257,6 +272,7 @@ function love.draw()
 			character.health = character.health - crtr.damage
 			crtr.speed = 0 
 			character.invincibility = 30
+			character.portrait = game.portraits.hurt
 			game.sfx.hurt:stop()
 			game.sfx.hurt:play()
 		else
@@ -338,11 +354,17 @@ function love.draw()
 	end
 
 	
-	love.graphics.draw(character.gfx, character.x, character.y, 0, 1, 1, (character.gfx:getHeight()/2), (character.gfx:getWidth()/2))
+	--love.graphics.draw(character.gfx, character.x, character.y, 0, 1, 1, (character.gfx:getHeight()/2), (character.gfx:getWidth()/2))
+	character.animation:draw(character.x-character.size, character.y-character.size)
+    -- local frame = character.animation:getCurrentFrame() --returns index
+	-- love.graphics.draw(frame, character.x, character.y, 0, 1, 1, frame:getHeight()/2, frame:getWidth()/2)
 	love.graphics.setColor(0,255,32,220)
 	love.graphics.draw(marker, character.x, character.y, angle + math.halfPI, 1, 1, (marker:getHeight()/2), (marker:getWidth()/2))
 	love.graphics.setColor(r,g,b,a)
 	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
+
+	-- draw character portrait with assumption it's 256 by 256.
+	love.graphics.draw(character.portrait, screenw /2, screenh -64, 0, 0.5, 0.5, 128, 128)
 
 	--- check if player dead
 	if character.health <= 0 then

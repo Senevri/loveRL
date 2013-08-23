@@ -10,6 +10,15 @@ game.testing = true
 
 game.view = {x=400, y=276, xratio = 1, yratio = 1}
 
+game.portraits = {}
+
+function game.setup() 
+	game.portraits.default = love.graphics.newImage('gfx/portrait_default.png');
+	game.portraits.hurt = love.graphics.newImage('gfx/portrait_hurt.png');
+	game.portraits.attack = love.graphics.newImage('gfx/portrait_attack.png');
+	game.portraits.quad = love.graphics.newImage('gfx/portrait_quad.png');
+end
+
 
 function game.keydown(key, character)
 	local x = character.x
@@ -32,7 +41,7 @@ function game.keydown(key, character)
 	end
 	if game.isWalkableTile(x,y) or game.isWalkableObject(x, y) then
 		character.x = x
-		character.y = y
+		character.y = y		
 	end
 
 	return character
@@ -52,6 +61,7 @@ function game.handleMouse(character, angle)
 	end
 
 	if love.mouse.isDown('r') then
+		character.portrait = game.portraits.attack
 		if character.attack.cooldown > 0 then
 			character.attack.cooldown = character.attack.cooldown -1
 			game.sfxplaying = game.sfxplaying -1
@@ -169,31 +179,37 @@ function game.setupCharacter(chr)
 	end
 	game.tiledobjects = objects
 
-	local image = love.graphics.newImage('gfx/testi.png')
+	local image = love.graphics.newImage('gfx/test_char2_strip.png')
 	image:setFilter('linear', 'nearest')
-	local wh = 16
+	local wh = 32 -- width, height of target frame
+	local framecountx = 2
 	character.size = 16
-	character.gfx = love.graphics.newCanvas(wh,wh)
+	character.gfx = love.graphics.newCanvas(wh * framecountx,wh)
 	character.gfx:renderTo(function()
 		r, g, b, a = love.graphics.getColor()
 		--[[
 		love.graphics.circle('fill', 6,6,5,30)
 		]]--
-		love.graphics.draw(image, 0, 0, 0, (wh/image:getWidth()), (wh/image:getHeight()), 0, 0)
+		-- lots of extra space per frame, so... 
+		love.graphics.draw(image, 0, 0, 0, (framecountx * (wh)/(image:getWidth())), ((wh)/image:getHeight()), 0, 0)
 		love.graphics.setColor(r, g, b, a)	
 		--love.graphics.line(5,1, 6,2)
 	end)
+	
 	--character.gfx = image
+	character.animation = newAnimation(character.gfx, 32,32,0.5, 0)
 	character.area = nil
 	if nil == chr then
 		character.loot = 0
 		character.speed = 1.5
 		character.health = 6
 		character.attack = {damage=1, range=1, cooldown = 0}
+		character.portrait = game.portraits.default
 	end
 	character.invincibility = 0
 	return character
 end
+
 
 game.tiledobjects = {}
 
