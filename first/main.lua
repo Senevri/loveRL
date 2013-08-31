@@ -32,6 +32,8 @@ require("libs.AnAL")
 
 --function math.getAngle(x1,y1, x2,y2) return math.atan2(x2-x1, y2-y1) end
 
+math.setup()
+
 character = {}
 
 function love.keypressed(key)
@@ -39,6 +41,10 @@ function love.keypressed(key)
 		love.event.push('quit')
 	end
 	if key ==  'return' then
+
+		for i, time in pairs(times) do
+			print("index: " .. i .. " time: " .. time)
+		end
 		game.paused = not game.paused
 	end
 	if key == "tab" then
@@ -86,12 +92,22 @@ end
 
 marker = nil
 crgfx = {}
+game.music = {}
+game.effects = {}
 
 function love.load()
 	--load sounds
 	game.sfx["attack"] = love.audio.newSource("sfx/shoot.wav", static)
 	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
+
+	game.music["default"] = love.audio.newSource("3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3", static)
+	game.music["default"]:setVolume(0.1)
+	
+	game.music["battle"] = love.audio.newSource("3p_music/BoxCat_Games_-_05_-_Battle_Boss.mp3", static)
+	game.music["battle"]:setVolume(0.1)
+	love.audio.play(game.music["default"])
+
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
@@ -138,7 +154,11 @@ function love.update(dt)
 	character.animation:update(dt)
 end
 
-function love.draw()	
+times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
+
+function love.draw()
+
+	local ttime = love.timer.getMicroTime()
 	character.portrait = game.portraits.default;
 	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
@@ -164,19 +184,23 @@ function love.draw()
 	end
 	r, g, b, a = love.graphics.getColor()
 
-	local canvas = love.graphics.newCanvas(screenw, screenh);
+	times.start = times.start + (love.timer.getMicroTime() - ttime);
+	ttime = love.timer.getMicroTime()
+
 	--background for top bar
-	canvas:renderTo(function () 
 		love.graphics.setColor(0,0,0,255)
 		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
 
 		love.graphics.setColor(255,255,255,255)
-		--TiledMap_DrawNearCam(game.view.x,game.view.y)
-		TiledMap_DrawNearCam(game.view.x,game.view.y)
+		TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
+		--game.view.x = character.x
+		--game.view.y = character.y 
+		--TiledMap_DrawNearCam(character.x,character.y, nil)
+		game.adjustObjectPositions()	
 		local rsize = 16
 		local mul = {1, 2, 4, 8}
 		for i, img in ipairs(crgfx) do
-		love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
+			love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
 		end
 
 		variable = variable + 0.01
@@ -188,8 +212,11 @@ function love.draw()
 
 
 		love.graphics.setColor(r, g, b, a)
-	end);
-	love.graphics.draw(canvas, 0, 0)
+	--end);
+	--love.graphics.draw(canvas, 0, 0)
+
+	times.middle = times.middle + (love.timer.getMicroTime() - ttime);
+	ttime = love.timer.getMicroTime()
 
 	for i, to in  ipairs(game.tiledobjects) do 
 		--local to = game.tiledobjects[i]
@@ -206,6 +233,8 @@ function love.draw()
 
 		character.area = game.getCharacterObjectArea(character,object)
 	end
+	times.endseg = times.endseg + (love.timer.getMicroTime() - ttime);
+	ttime = love.timer.getMicroTime()
 	
 	-- run per-level custom script
 
@@ -213,6 +242,10 @@ function love.draw()
 	if nil ~= levelfunction then 
 		character, game = levelfunction(character, nil, game) 
 	end
+
+	times.custom = times.custom + (love.timer.getMicroTime() - ttime);
+	ttime = love.timer.getMicroTime()
+
 
 	love.graphics.setColor(255,255,0,255)
 	for i, loot in ipairs( game.loot ) do
@@ -229,8 +262,8 @@ function love.draw()
 		end
 	end
 
-	canvas = love.graphics.newCanvas(screenw, screenh)
-	canvas:renderTo(function()
+	--canvas = love.graphics.newCanvas(screenw, screenh)
+	--canvas:renderTo(function()
 		love.graphics.print("Loot: " .. character.loot, 10, 3)
 
 
@@ -243,10 +276,12 @@ function love.draw()
 		love.graphics.print("Range: " .. character.attack.range, 300, 3)
 
 		love.graphics.print("Speed: " .. character.speed, 400, 3)
-	end)
-	love.graphics.draw(canvas)
+	--end)
+	--love.graphics.draw(canvas)
 
 	love.graphics.setColor(255, 0, 0, 225)
+
+	--Draw Creatures-- 
 	for i = 1, #game.creatures do 
 		crtr = game.creatures[i]
 		if crtr == nil then break end
@@ -256,9 +291,15 @@ function love.draw()
 		end
 
 		wh = 48
-		love.graphics.setColor(255, 0, 0, 255)
-		love.graphics.rectangle('fill', crtr.x, crtr.y, crtr.size, crtr.size) 
-		love.graphics.setColor(255, 0, 0, 225)
+		love.graphics.setColor(255, 255, 255, 255)
+		local crwidth=crtr.gfx:getWidth()
+		local crheight=crtr.gfx:getHeight()
+		love.graphics.draw(crtr.gfx, crtr.x+crtr.size/2, 
+			crtr.y + (crtr.size/2),
+			math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
+			crwidth/2, crheight/2	
+			)
+		love.graphics.setColor(255, 0, 0, 128)
 		love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2, 
 			math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
 
@@ -343,7 +384,7 @@ function love.draw()
 	end
 
 
-	angle = math.getAngle(character.x, character.y,  love.mouse.getX(), love.mouse.getY() )
+	local angle = math.getAngle(character.x, character.y,  love.mouse.getX(), love.mouse.getY() )
 	character.direction = angle
 	character = game.handleMouse(character, angle)
 
@@ -371,5 +412,7 @@ function love.draw()
 		--fixme make proper
 		love.event.push("quit") 
 	end
+	times.rest = times.rest + (love.timer.getMicroTime() - ttime);
+	ttime = love.timer.getMicroTime()
 
 end

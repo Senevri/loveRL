@@ -8,15 +8,51 @@ local game = {}
 
 game.testing = true
 
-game.view = {x=400, y=276, xratio = 1, yratio = 1}
+game.view = {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2, xratio = 1, yratio = 1}
 
 game.portraits = {}
+game.creatures = {}
+game.projectiles = {}
+game.loot = {}
 
 function game.setup() 
 	game.portraits.default = love.graphics.newImage('gfx/portrait_default.png');
 	game.portraits.hurt = love.graphics.newImage('gfx/portrait_hurt.png');
 	game.portraits.attack = love.graphics.newImage('gfx/portrait_attack.png');
 	game.portraits.quad = love.graphics.newImage('gfx/portrait_quad.png');
+end
+
+game.adjusting = {amount=0, direction=0}
+function game.adjustObjectPositions()
+	if (game.adjusting.amount ~=0) then 
+		for i, to in ipairs(game.creatures) do
+			to.y = to.y + game.adjusting.direction		
+		end
+	
+		for i, to in ipairs(game.projectiles) do
+			to.y = to.y + game.adjusting.direction
+		end
+		
+		for i, to in ipairs(game.loot) do
+			to.y = to.y + game.adjusting.direction
+		end
+		character.y = character.y + game.adjusting.direction
+		game.view.y = game.view.y - game.adjusting.direction
+		game.adjusting.amount = game.adjusting.amount -1
+	else 
+		if character.y > 2*love.graphics.getHeight()/3 then
+			game.adjusting.amount = love.graphics.getHeight()/8
+			game.adjusting.direction = -1
+		end
+		if character.y < love.graphics.getHeight()/8 then
+			game.adjusting.amount = love.graphics.getHeight()/8
+			game.adjusting.direction = 1
+		end
+	end
+end
+
+function game.adjustY(origy) 
+	return origy - game.view.y + love.graphics.getHeight()/2
 end
 
 
@@ -83,7 +119,6 @@ end
 
 
 
-game.projectiles = {}
 
 function game.isWalkableTile(x,y) 
 	local tx, ty = TiledMap_GetTilePosUnderMouse(x, y, game.view.x, game.view.y)
@@ -99,7 +134,7 @@ function game.isWalkableObject(x,y)
 	for i, obj in ipairs(game.tiledobjects) do 
 		-- for walkables, width and height exist -- 
 		if obj.type ~= nil and (obj.type == "walkable") then 
-			if (tonumber(obj.x) <= x) and (tonumber(obj.y) <= y) and ((obj.x + obj.width) >= x) and ((obj.y+obj.height) >= y) then
+			if (tonumber(obj.x) <= x) and (tonumber(game.adjustY(obj.y)) <= y) and ((obj.x + obj.width) >= x) and ((game.adjustY(obj.y)+obj.height) >= y) then
 				return true;
 			end
 		end
@@ -116,21 +151,24 @@ function game.createProjectile(x, y, direction)
 end
 
 -- TODO: Distinct creatures
-game.creatures = {}
 
 game.crgfx = {
-	"gfx/spidercreature_320.png",
-	"gfx/goblincreature_320.png",
-	"gfx/colossuscreature_320.png",
-	"gfx/bosscreature_320.png",
+	spider = "gfx/spidercreature_320.png",
+	goblin = "gfx/goblincreature_320.png",
+	colossus = "gfx/colossuscreature_320.png",
+	dragon = "gfx/bosscreature_320.png",
 }
 
-function game.createCreature(x,y,direction,size, health) 
-	local creature = {x=x, y=y, direction=direction, size=size, health=health, speed=1.5, damage=0.5}
+function game.createCreature(x,y,direction, size, health, crtype)  
+	local creature = {
+		x=x, y=y, direction=direction, 
+		size=size, health=health, speed=1.5, damage=0.5,
+		gfx = love.graphics.newImage(game.crgfx[crtype]),
+		animation = {}
+	}
 	table.insert(game.creatures, creature)
 end
 
-game.loot = {}
 
 function game.createLoot(x,y) 
 	local loot = { x = x, y = y, value = math.random(5) }
@@ -151,11 +189,17 @@ function game.collision(creature, projectile)
 end
 
 function game.getCharacterObjectArea(character, object) 
-	if character.x > tonumber(object.x) and character.y > tonumber(object.y) and 
-		character.x < object.x + object.width and 
-		character.y < object.y + object.height then
+	local charx = character.x --+ game.view.x --- (love.graphics.getWidth()/2)
+	local chary = character.y
+	local objy = object.y - game.view.y + love.graphics.getHeight()/2
+	love.graphics.rectangle("line", object.x, 
+		object.y - game.view.y + love.graphics.getHeight()/2,
+		object.width, object.height)
+	if charx > tonumber(object.x) and chary > tonumber(objy) and 
+		charx < object.x + object.width and 
+		chary < objy + object.height then
+		print (character.area)
 		return object.name
-		--print (character.area)
 	end
 
 	return nil
@@ -197,7 +241,7 @@ function game.setupCharacter(chr)
 	end)
 	
 	--character.gfx = image
-	character.animation = newAnimation(character.gfx, 32,32,0.5, 0)
+	character.animation = newAnimation(character.gfx, 32,32,0.5, 2)
 	character.area = nil
 	if nil == chr then
 		character.loot = 0
@@ -256,6 +300,7 @@ end
 function game.loadLevelByIndex(index, character) 
 	game.loot = {}
 	game.creatures = {}
+	game.view = {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2, xratio = 1, yratio = 1}
 
 	game.levels.seekByIndex(index)
 	local tilesize = 32

@@ -21,11 +21,14 @@ function scripts.default(character, condition, game)
 					print (k, v) 
 				end
 				]]--
+				local randomcreature = {"spider", "goblin", "colossus"}
 				for i = 1, 10, 1 do
+					local crid = math.random(3);
 					game.createCreature(spawnarea.x + math.random(spawnarea.width), 
 					spawnarea.y + math.random(spawnarea.height), 
 					math.pi * i/30,  
-					math.random(10, 30), math.random(2, 20))
+					16*crid, 5*crid, 
+					randomcreature[crid])
 					--	game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
 				end
 			end
@@ -85,11 +88,14 @@ function scripts.bosslevel(character, condition, game)
 	if condition == "init" then
 		TiledMap_SetLayerInvisByName("Hidden")
 		TiledMap_SetLayerInvisByName("Hidden2")
+		game.music.default:stop();
+		game.music.battle:play();
 	end
 
 	if nil ~= character.area and character.area == "ItemRoom" then 
 		--love.graphics.print (character.area, 700, 10)
 	end
+
 	for i, to in ipairs(game.tiledobjects) do 
 		--print(to.name)
 		character.area = game.getCharacterObjectArea(character, to)
@@ -97,6 +103,14 @@ function scripts.bosslevel(character, condition, game)
 			love.graphics.print ("Found Secret Area!", 700, 10)
 			TiledMap_SetLayerVisibleByName("Hidden")	
 			TiledMap_SetLayerVisibleByName("Hidden2")	
+		end
+
+		if character.area == "Shop" then
+			game.inShop()
+		end
+
+		if to.name == "BossSpawn" then
+			love.graphics.print("boss!", to.x, game.adjustY(to.y))
 		end
 	end
 

@@ -141,10 +141,10 @@ function TiledMap_GetTilePosUnderMouse (mx,my,camx,camy)
             floor((my+camy-love.graphics.getHeight()/2)/kTileSize)
 end
 
-function TiledMap_DrawNearCam (camx,camy,fun_layercallback)
+function TiledMap_DrawNearCam (camx,camy,fun_layercallback, screenw, screenh)
     camx,camy = floor(camx),floor(camy)
-    local screen_w = love.graphics.getWidth()
-    local screen_h = love.graphics.getHeight()
+    local screen_w = screenw or love.graphics.getWidth()
+    local screen_h = screenh or love.graphics.getHeight()
     local minx,maxx = floor((camx-screen_w/2)/kTileSize),ceil((camx+screen_w/2)/kTileSize)
     local miny,maxy = floor((camy-screen_h/2)/kTileSize),ceil((camy+screen_h/2)/kTileSize)
     for z = 1,#gMapLayers do 

@@ -1,3 +1,26 @@
+-- make some precalculated tables --
+--
+math.atan2lookup = {}
+math.sinlookup = {}
+math.coslookup = {}
+
+function math.setup()	
+
+	for i = 1, 361 do
+		table.insert(math.sinlookup, math.sin(math.halfPI/i))
+		table.insert(math.coslookup, math.cos(math.halfPI/i))
+	end
+	--[[
+	for j = 1, 2000 do
+		math.atan2lookup[j-1]={}
+		for k =1, 2000 do
+			print("math " .. j .. " " .. k)
+			math.atan2lookup[j-1][k-1] = math.atan2(j-1, k-1)
+		end
+	end]]--
+
+end
+
 
 -- Averages an arbitrary number of angles.
 function math.averageAngles(...)
@@ -17,7 +40,24 @@ function math.dist3d(x1,y1,z1, x2,y2,z2) return ((x2-x1)^2+(y2-y1)^2+(z2-z1)^2)^
 
 
 -- Returns the angle between two points.
-function math.getAngle(x1,y1, x2,y2) return (math.halfPI - math.atan2(x2-x1, y2-y1)) end
+function math.getAngle2(x1,y1, x2,y2) 
+	local x = x2-x1
+	local y = y2-y1
+	if nil == math.atan2lookup[x] then
+		math.atan2lookup[x] = {}
+		local val = math.atan2(x, y);
+		math.atan2lookup[x][y] = val
+		return val
+	elseif nil == math.atan2lookup[x][y] then
+		local val = math.atan2(x, y);
+		math.atan2lookup[x][y] = val
+		return val
+	else
+		return (math.halfPI - math.atan2lookup[x2-x1][y2-y1])
+	end
+end
+
+function math.getAngle(x1, y1, x2, y2) return math.halfPI - math.atan2(x2-x1, y2-y1) end
 
 
 -- Returns the closest multiple of 'size' (defaulting to 10).
@@ -35,7 +75,12 @@ function math.normalize(t) local n,m = #t,0 for i=1,n do m=m+t[i] end m=1/m for 
 
 math.halfPI = math.pi/2
 
-function math.translate(x, y, angle, distance) 
+function math.translate(x, y, angle, distance)
+	--if angle > 2*math.pi then 
+	--	angle = angle % (math.pi*2)
+	--end
+	--x = x + distance * math.coslookup[math.floor( 180/(math.pi)*angle)]
+	--y = y + distance * math.sinlookup[math.floor( 180/(math.pi)*angle)]
 	x = x + distance * math.cos(angle)
 	y = y + distance * math.sin(angle)
 	return x, y
