@@ -6,6 +6,13 @@
 
 local scripts = {}
 
+local creatureSpecs = {
+    spider = { size=32},
+    goblin = { size=40},
+    colossus = { size=64},
+    boss = { size=128}
+}
+
 function scripts.default(character, condition, game)
 
 	if (game == nil) then 
@@ -23,11 +30,13 @@ function scripts.default(character, condition, game)
 				]]--
 				local randomcreature = {"spider", "goblin", "colossus"}
 				for i = 1, 10, 1 do
-					local crid = math.random(3);
-					game.createCreature(spawnarea.x + math.random(spawnarea.width), 
+					local crid = math.random(3)
+                    local spec = creatureSpecs[randomcreature[crid]]
+					game.createCreature(
+                    spawnarea.x + math.random(spawnarea.width), 
 					spawnarea.y + math.random(spawnarea.height), 
 					math.pi * i/30,  
-					16*crid, 5*crid, 
+					spec.size, 5*crid, 
 					randomcreature[crid])
 					--	game.createCreature(400, math.random(600), math.pi * i/30,  math.random(10, 30), math.random(5, 60))
 				end

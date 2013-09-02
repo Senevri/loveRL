@@ -43,7 +43,7 @@ function love.keypressed(key)
 	if key ==  'return' then
 
 		for i, time in pairs(times) do
-			print("index: " .. i .. " time: " .. time)
+			--print("index: " .. i .. " time: " .. time)
 		end
 		game.paused = not game.paused
 	end
@@ -87,7 +87,7 @@ function love.keypressed(key)
 		end
 	end
 
-	print( key)
+	--print( key)
 end
 
 marker = nil
@@ -152,6 +152,12 @@ end
 
 function love.update(dt)
 	character.animation:update(dt)
+    for i, creature in ipairs(game.creatures) do
+        if creature.animation ~= nil then 
+            print("not nil")
+            creature.animation:update(dt) 
+        end
+    end
 end
 
 times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
@@ -292,23 +298,14 @@ function love.draw()
 
 		wh = 48
 		love.graphics.setColor(255, 255, 255, 255)
-		local crwidth=crtr.gfx:getWidth()
-		local crheight=crtr.gfx:getHeight()
-		love.graphics.draw(crtr.gfx, crtr.x+crtr.size/2, 
-			crtr.y + (crtr.size/2),
-			math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
-			crwidth/2, crheight/2	
-			)
-		love.graphics.setColor(255, 0, 0, 128)
-		love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2, 
-			math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
+        drawCreature(crtr)
 
 		--done drawing, now logic
 		if nil == game.creatures[i] then break end
 		local crtr = game.creatures[i]
 
 		-- take player health on collision 
-		if math.dist(crtr.x + crtr.size/2, crtr.y + crtr.size/2, character.x + 6, character.y+6) < (crtr.size/2 + 6) and
+		if game.collision(character, crtr) and
 			character.invincibility == 0 then
 			character.health = character.health - crtr.damage
 			crtr.speed = 0 
@@ -328,22 +325,27 @@ function love.draw()
 			game.creatures[i].speed = 2.2
 		end	
 		if (math.random() < 0.010) then
-			game.creatures[i].direction = (math.random()*math.pi ) 
+			game.creatures[i].direction = (math.random(0, 32)*math.pi/16) 
 			game.creatures[i].speed = 1.0
 		end
 		--
 		local crx, cry
 		crx, cry = math.translate(crtr.x, crtr.y, game.creatures[i].direction, crtr.speed)
 
-		if game.isWalkableTile(crx +crtr.size /2, cry + crtr.size/2) then
+		if game.isWalkableTile(crx, cry, crtr.size) then
 			game.creatures[i].x = crx
 			game.creatures[i].y = cry
+		else 
+			game.creatures[i].direction = game.creatures[i].direction + math.pi/16
 		end
+
+        --[[ 
 		if (game.creatures[i].x < 0 or game.creatures[i].y < 0) or 
 			(game.creatures[i].x +crtr.size > love.graphics.getWidth() or 
 			game.creatures[i].y + crtr.size > love.graphics.getHeight()) then 
-			game.creatures[i].direction = game.creatures[i].direction * -1
+			game.creatures[i].direction = game.creatures[i].direction + math.pi
 		end
+        ]]--
 
 		for j = 1, #game.projectiles do
 			if nil == game.projectiles[j] then break end
@@ -415,4 +417,27 @@ function love.draw()
 	times.rest = times.rest + (love.timer.getMicroTime() - ttime);
 	ttime = love.timer.getMicroTime()
 
+end
+
+function drawCreature(crtr) 
+    local crwidth=crtr.gfx:getWidth()
+    local crheight=crtr.gfx:getHeight()
+    if crtr.animation == nil then 
+        love.graphics.draw(crtr.gfx, 
+        crtr.x+crtr.size/2, 
+        crtr.y + (crtr.size/2),
+        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
+        crwidth/2, crheight/2	
+        )
+    else
+        crtr.animation:draw(
+        crtr.x+crtr.size/2, 
+        crtr.y + (crtr.size/2),
+        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
+        crwidth/2, crheight/2	
+        )
+    end
+    love.graphics.setColor(255, 0, 0, 128)
+    love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2, 
+    math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
 end
