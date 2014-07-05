@@ -316,6 +316,7 @@ function game.loadLevelByIndex(index, character)
 
     game.levels.seekByIndex(index)
     local tilesize = 32
+	print (game.levels.currentlevel)
     TiledMap_Load(game.levels.currentlevel, tilesize, '/', "tiled/", 1, 1)
     game.view.xratio = love.graphics.getWidth() / (TiledMap_GetMapW() * tilesize )
     game.view.yratio = love.graphics.getHeight() / (TiledMap_GetMapH() * tilesize )

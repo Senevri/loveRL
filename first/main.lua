@@ -101,13 +101,13 @@ function love.load()
 	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
 
-	game.music["default"] = love.audio.newSource("3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3", static)
+	--[[game.music["default"] = love.audio.newSource("3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3", static)
 	game.music["default"]:setVolume(0.1)
 	
 	game.music["battle"] = love.audio.newSource("3p_music/BoxCat_Games_-_05_-_Battle_Boss.mp3", static)
 	game.music["battle"]:setVolume(0.1)
 	love.audio.play(game.music["default"])
-
+]]--
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
