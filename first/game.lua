@@ -269,7 +269,7 @@ function game.setupCharacter(chr)
     end
     game.tiledobjects = objects
 
-    local image = love.graphics.newImage('gfx/test_char2_strip.png')
+    local image = love.graphics.newImage('gfx/blank_strip.png')
     image:setFilter('linear', 'nearest')
     local wh = 32 -- width, height of target frame
     local framecountx = 2
@@ -308,6 +308,7 @@ game.sfx = {}
 game.shop = {}
 
 game.levels = require("first.levels")
+game.levels.init(game)
 
 function game.loadLevelByIndex(index, character) 
     game.loot = {}

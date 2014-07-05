@@ -164,7 +164,7 @@ times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
 
 function love.draw()
 
-	local ttime = love.timer.getMicroTime()
+	local ttime = love.timer.getTime()
 	character.portrait = game.portraits.default;
 	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
@@ -190,8 +190,8 @@ function love.draw()
 	end
 	r, g, b, a = love.graphics.getColor()
 
-	times.start = times.start + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.start = times.start + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 	--background for top bar
 		love.graphics.setColor(0,0,0,255)
@@ -221,8 +221,8 @@ function love.draw()
 	--end);
 	--love.graphics.draw(canvas, 0, 0)
 
-	times.middle = times.middle + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.middle = times.middle + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 	for i, to in  ipairs(game.tiledobjects) do 
 		--local to = game.tiledobjects[i]
@@ -239,8 +239,8 @@ function love.draw()
 
 		character.area = game.getCharacterObjectArea(character,object)
 	end
-	times.endseg = times.endseg + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.endseg = times.endseg + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 	
 	-- run per-level custom script
 
@@ -249,8 +249,8 @@ function love.draw()
 		character, game = levelfunction(character, nil, game) 
 	end
 
-	times.custom = times.custom + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.custom = times.custom + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 
 	love.graphics.setColor(255,255,0,255)
@@ -404,7 +404,7 @@ function love.draw()
 	love.graphics.setColor(0,255,32,220)
 	love.graphics.draw(marker, character.x, character.y, angle + math.halfPI, 1, 1, (marker:getHeight()/2), (marker:getWidth()/2))
 	love.graphics.setColor(r,g,b,a)
-	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
+	love.window.setTitle(title .. " (FPS: " .. love.timer.getFPS() .. ")")
 
 	-- draw character portrait with assumption it's 256 by 256.
 	love.graphics.draw(character.portrait, screenw /2, screenh -64, 0, 0.5, 0.5, 128, 128)
@@ -414,8 +414,8 @@ function love.draw()
 		--fixme make proper
 		love.event.push("quit") 
 	end
-	times.rest = times.rest + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.rest = times.rest + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 end
 

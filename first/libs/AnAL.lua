@@ -1,5 +1,5 @@
 --[[
-Copyright (c) 2009-2010 Bart Bes
+Copyright (c) 2009-2013 Bart Bes
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -34,7 +34,7 @@ animation.__index = animation
 -- @param delay The delay between two frames
 -- @param frames The number of frames, 0 for autodetect
 -- @return The created animation
-function newAnimation(image, fw, fh, delay, frames, startframe)
+function newAnimation(image, fw, fh, delay, frames)
 	local a = {}
 	a.img = image
 	a.frames = {}
@@ -52,10 +52,8 @@ function newAnimation(image, fw, fh, delay, frames, startframe)
 	if frames == 0 then
 		frames = imgw / fw * imgh / fh
 	end
-    local startframe = startframe or 1
-
 	local rowsize = imgw/fw
-	for i = startframe, frames do
+	for i = 1, frames do
 		local row = math.floor((i-1)/rowsize)
 		local column = (i-1)%rowsize
 		local frame = love.graphics.newQuad(column*fw, row*fh, fw, fh, imgw, imgh)
@@ -86,13 +84,16 @@ function animation:update(dt)
 		elseif self.position < 1 and self.mode == 3 then
 			self.direction = 1
 			self.position = self.position + 1
+		elseif self.position < 1 and self.mode == 4 then
+			self.position = #self.frames
 		end
 	end
 end
 
 --- Draw the animation
+local drawq = love.graphics.drawq or love.graphics.draw
 function animation:draw(...)
-	love.graphics.drawq(self.img, self.frames[self.position], ...)
+	return drawq(self.img, self.frames[self.position], ...)
 end
 
 --- Add a frame
@@ -123,7 +124,7 @@ end
 --- Reset
 -- Go back to the first frame.
 function animation:reset()
-	self:seek(1)
+	return self:seek(1)
 end
 
 --- Seek to a frame
@@ -161,13 +162,13 @@ end
 --- Get the width of the current frame
 -- @return The width of the current frame
 function animation:getWidth()
-	return self.frames[self.position]:getWidth()
+	return (select(3, self.frames[self.position]:getViewport()))
 end
 
 --- Get the height of the current frame
 -- @return The height of the current frame
 function animation:getHeight()
-	return self.frames[self.position]:getHeight()
+	return (select(4, self.frames[self.position]:getViewport()))
 end
 
 --- Set the play mode
@@ -176,10 +177,15 @@ end
 function animation:setMode(mode)
 	if mode == "loop" then
 		self.mode = 1
+		self.direction = 1
 	elseif mode == "once" then
 		self.mode = 2
+		self.direction = 1
 	elseif mode == "bounce" then
 		self.mode = 3
+	elseif mode == "reverse" then
+		self.mode = 4
+		self.direction = -1
 	end
 end
 
@@ -190,9 +196,9 @@ if Animations_legacy_support then
 	local oldLGDraw = love.graphics.draw
 	function love.graphics.draw(item, ...)
 		if type(item) == "table" and item.draw then
-			item:draw(...)
+			return item:draw(...)
 		else
-			oldLGDraw(item, ...)
+			return oldLGDraw(item, ...)
 		end
 	end
 end
