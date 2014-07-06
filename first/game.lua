@@ -177,6 +177,7 @@ function game.createCreature(x,y,direction, size, health, crtype)
         animation = game.createCreatureAnimation(crtype),
     }
     table.insert(game.creatures, creature)
+	return creature
 end
 
 function game.createCreatureAnimation(crtype) 
@@ -204,6 +205,7 @@ end
 
 
 function game.createLoot(x,y) 
+	--FIXME: do not create loot inside a wall
     local loot = { x = x, y = y, value = math.random(5) }
     table.insert(game.loot, loot)
 end
@@ -334,6 +336,7 @@ end
 
 
 function game.inShop()
+    character.area = "Shop"
     local r, g, b, a = love.graphics.getColor()
     love.graphics.setColor(255,255,0,255)
     local shop = {

@@ -14,9 +14,8 @@ current debug buttons:
  * 1 increases attack damage
  * 2 increases attack range. 
 
-uses an expanded version of TiledMapLoader to load maps created with Tiled; requires a bit of XML hacking to get them to working, 
-no support for properties. 
-
 [https://love2d.org/wiki/TiledMapLoader]
 
-test map uses a default Tiled tileset; not included in repository. 
+Some Creative Commons placeholder music
+Sound effects by BFXR.
+

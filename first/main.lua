@@ -52,7 +52,7 @@ function love.keypressed(key)
       		love.mouse.setVisible(state)
    	end
 	if character.area == "Shop" then 
-	
+        print ("shop transaction")	
 		if key == "1" and 
 			character.loot >= game.shop.attack
 			then
@@ -74,13 +74,18 @@ function love.keypressed(key)
 			character.speed = character.speed + 0.5 
 			character.loot = character.loot - game.shop.speed 
 		end
+        if key == "4" and 
+            character.loot >= 5
+            then
+                character.health = character.health + 1
+            end
 	end
 
 	--for testing
 	if game.testing == false then return end
 	if key == "f1" then 
 		game.paused = false
-		character.health = character.health +1
+		character.health = character.health + 1
 		game.levels.next()
 		if nil ~=  game.levels.currentlevel then 
 			character, game = game.loadLevelByIndex(game.levels.index, character)
@@ -101,13 +106,12 @@ function love.load()
 	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
 
-	--[[game.music["default"] = love.audio.newSource("3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3", static)
+	game.music["default"] = love.audio.newSource("cc_music/8bit Dungeon Level.mp3", static)
 	game.music["default"]:setVolume(0.1)
 	
-	game.music["battle"] = love.audio.newSource("3p_music/BoxCat_Games_-_05_-_Battle_Boss.mp3", static)
+	game.music["battle"] = love.audio.newSource("cc_music/8bit Dungeon Boss.mp3", static)
 	game.music["battle"]:setVolume(0.1)
 	love.audio.play(game.music["default"])
-]]--
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
@@ -292,8 +296,11 @@ function love.draw()
 		crtr = game.creatures[i]
 		if crtr == nil then break end
 		if crtr.health < 1 then 
-			table.remove(game.creatures, i)
+			if game.scripts.creatureSlain ~=nil then
+				game.scripts.creatureSlain(crtr)
+			end
 			game.createLoot(crtr.x, crtr.y)
+			table.remove(game.creatures, i)			
 		end
 
 		wh = 48

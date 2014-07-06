@@ -4,13 +4,13 @@
 --
 --]]--
 
-local scripts = {}
+local scripts = {bossspawned = 0}
 
 local creatureSpecs = {
     spider = { size=32},
     goblin = { size=40},
     colossus = { size=64},
-    boss = { size=128}
+    boss = { size=128, spawned = false}
 }
 
 function scripts.default(character, condition, game)
@@ -108,21 +108,66 @@ function scripts.bosslevel(character, condition, game)
 	for i, to in ipairs(game.tiledobjects) do 
 		--print(to.name)
 		character.area = game.getCharacterObjectArea(character, to)
-		if character.area == "ItemRoom" then 
+		if character.area == "ItemRoom" and nil == scripts.chestlooted then
 			love.graphics.print ("Found Secret Area!", 700, 10)
 			TiledMap_SetLayerVisibleByName("Hidden")	
 			TiledMap_SetLayerVisibleByName("Hidden2")	
 		end
 
+        if character.area == "Chest" then
+            -- give money            
+			if nil ~= to.properties then			
+				for j, prop in ipairs(to.properties) do
+					print (prop)
+					if prop.name == "loot" then 
+						character.loot = character.loot + prop.value
+						prop.value = 0
+						scripts.chestlooted = true
+					end
+				end					
+			end
+            --to.loot = 0
+            TiledMap_SetLayerInvisByName("Hidden")
+        end
+
+        if to.name == "BossSpawn" then
+            if scripts.bossspawned == 0 then
+                local spawnarea = to
+                love.graphics.print("boss!", to.x, game.adjustY(to.y))
+                game.createCreature(
+                spawnarea.x, 
+                spawnarea.y, 
+                math.pi * i/30,  
+                creatureSpecs["boss"].size, 100, 
+                "colossus")
+                scripts.bossspawned = 1
+            end
+        end
+
 		if character.area == "Shop" then
 			game.inShop()
 		end
-
-		if to.name == "BossSpawn" then
-			love.graphics.print("boss!", to.x, game.adjustY(to.y))
+		
+		if (game.scripts.creatureSlain == nil) then
+			game.scripts.creatureSlain = function(creature) 
+				for i = 0, 10, 1 do
+					game.createLoot(creature.x + creature.size/2, creature.y + creature.size /2)
+				end
+			end
 		end
+		--clear on exit
+		if character.area == "WayDown" then 
+			game.scripts.creatureSlain =nil
+			game.scripts.bossspawned = 0
+			game.scripts.chestlooted = nil
+			--standard snippet
+			game.levels.next()
+			if nil ==  game.levels.currentlevel then break end
+			character, game = game.loadLevelByIndex(game.levels.index, character)
+			break
+		end
+		
 	end
-
 	return character, game
 end
 
