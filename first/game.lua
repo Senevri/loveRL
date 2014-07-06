@@ -15,6 +15,8 @@ game.creatures = {}
 game.projectiles = {}
 game.loot = {}
 
+game.inputScripts = {}
+
 function game.setup() 
     game.portraits.default = love.graphics.newImage('gfx/portrait_default.png');
     game.portraits.hurt = love.graphics.newImage('gfx/portrait_hurt.png');
@@ -243,10 +245,9 @@ function game.getCharacterObjectArea(character, object)
     love.graphics.rectangle("line", object.x, 
     object.y - game.view.y + love.graphics.getHeight()/2,
     object.width, object.height)
-    if charx > tonumber(object.x) and chary > tonumber(objy) and 
+	if charx > tonumber(object.x) and chary > tonumber(objy) and 
         charx < object.x + object.width and 
         chary < objy + object.height then
-        print (character.area)
         return object.name
     end
 
@@ -261,7 +262,6 @@ function game.setupCharacter(chr)
     end
     local objects = TiledMap_Objects(game.levels.currentlevel)
     for k, object in pairs(objects) do
-        print(object.name, object.x, object.y)
         objects[k].x = object.x - game.view.x + (love.graphics.getWidth()/2 )
         objects[k].y = object.y - game.view.y + (love.graphics.getHeight()/2 )
         if object.name == "Start" then
@@ -290,7 +290,7 @@ function game.setupCharacter(chr)
 
     --character.gfx = image
     character.animation = newAnimation(character.gfx, 32,32,0.5, 2)
-    character.area = nil
+	character.area = {}
     if nil == chr then
         character.loot = 0
         character.speed = 1.5
@@ -334,22 +334,30 @@ function game.loadLevelByIndex(index, character)
 end
 
 
-
+-- FIXME hacky shop
 function game.inShop()
-    character.area = "Shop"
+	-- print ("inshop " .. character.area)
+    --character.area = "Shop"
     local r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(255,255,0,255)
+
     local shop = {
         attack = (character.attack.damage + 0.5) *6,
         range = (character.attack.range + 0.5) *6,
-        speed = (character.speed + 0.5) *6
+        speed = (character.speed + 0.5) *6,
+		health = 5
     }
+	
+	love.graphics.setColor(0,0,16,144)
+	love.graphics.rectangle("fill", 6, 60, 128, 80)
+	love.graphics.setColor(255,212,0,255)
     love.graphics.print("Sacrifice Loot", 10, 64)
     love.graphics.print("attack " .. shop.attack, 10, 80)
     love.graphics.print("range " .. shop.range, 10, 96)
     love.graphics.print("speed " .. shop.speed, 10, 112)
+	love.graphics.print("health " .. shop.health, 10, 128)
     game.shop = shop
     love.graphics.setColor(r,g,b,a)
+	return game
 end
 
 return game

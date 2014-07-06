@@ -34,9 +34,16 @@ require("libs.AnAL")
 
 math.setup()
 
-character = {}
+character = { area="naaaa"}
 
 function love.keypressed(key)
+	print (key)
+	if character ~= nil and character.area ~= nil then
+		for area, val in pairs(character.area) do
+			print (area)
+		end
+	end
+		
 	if key ==  'escape' then
 		love.event.push('quit')
 	end
@@ -51,34 +58,11 @@ function love.keypressed(key)
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
       		love.mouse.setVisible(state)
    	end
-	if character.area == "Shop" then 
-        print ("shop transaction")	
-		if key == "1" and 
-			character.loot >= game.shop.attack
-			then
-			character.attack.damage = character.attack.damage + 0.5
-			character.loot = character.loot - game.shop.attack
+	
+	for i, script in ipairs(game.inputScripts) do
+		if (nil ~= script) then			
+			character, game, key = script(key, character, game)
 		end
-
-		if key == "2" and 
-			character.loot >= game.shop.range
-			then
-			character.attack.range = character.attack.range + 0.5 
-			character.loot = character.loot - game.shop.range
-		end
-
-		if key == "3" and 
-			character.loot >= game.shop.speed 
-			then
-
-			character.speed = character.speed + 0.5 
-			character.loot = character.loot - game.shop.speed 
-		end
-        if key == "4" and 
-            character.loot >= 5
-            then
-                character.health = character.health + 1
-            end
 	end
 
 	--for testing
@@ -158,7 +142,7 @@ function love.update(dt)
 	character.animation:update(dt)
     for i, creature in ipairs(game.creatures) do
         if creature.animation ~= nil then 
-            print("not nil")
+            --print("not nil")
             creature.animation:update(dt) 
         end
     end
@@ -227,7 +211,7 @@ function love.draw()
 
 	times.middle = times.middle + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
-
+	character.area = {}
 	for i, to in  ipairs(game.tiledobjects) do 
 		--local to = game.tiledobjects[i]
 		if nil == to then break end
@@ -240,8 +224,10 @@ function love.draw()
 
 		local object = game.tiledobjects[i]
 		if nil == object or nil ~= object.gid then break end
-
-		character.area = game.getCharacterObjectArea(character,object)
+		local temparea = game.getCharacterObjectArea(character, object)
+		if nil ~= temparea then
+			character.area[temparea] = true;
+		end
 	end
 	times.endseg = times.endseg + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
@@ -299,7 +285,7 @@ function love.draw()
 			if game.scripts.creatureSlain ~=nil then
 				game.scripts.creatureSlain(crtr)
 			end
-			game.createLoot(crtr.x, crtr.y)
+			game.createLoot(crtr.x + math.random(crtr.size), crtr.y + math.random(crtr.size))
 			table.remove(game.creatures, i)			
 		end
 
