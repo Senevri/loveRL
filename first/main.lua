@@ -84,18 +84,32 @@ crgfx = {}
 game.music = {}
 game.effects = {}
 
+
+-- define easily editable strings
+game.music.sources = {
+	default = "3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3",
+	battle = "3p_music/BoxCat_Games_-_05_-_Battle_Boss.mp3"
+}
+
+
 function love.load()
 	--load sounds
 	game.sfx["attack"] = love.audio.newSource("sfx/shoot.wav", static)
 	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
 
-	game.music["default"] = love.audio.newSource("cc_music/8bit Dungeon Level.mp3", static)
-	game.music["default"]:setVolume(0.1)
+	print ("love.load ".. game.music.sources["default"])
+	for key, filename in pairs (game.music.sources) do 
+		print ("key " .. key .. " name " .. filename )
+		if love.filesystem.exists(filename) then 
+			game.music[key] = love.audio.newSource(game.music.sources["default"], static)
+			game.music[key]:setVolume(0.1)
+		
+		end
+	end
 	
-	game.music["battle"] = love.audio.newSource("cc_music/8bit Dungeon Boss.mp3", static)
-	game.music["battle"]:setVolume(0.1)
-	love.audio.play(game.music["default"])
+	if game.music.default ~= nil then love.audio.play(game.music["default"]) end
+
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()

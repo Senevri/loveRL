@@ -6,7 +6,7 @@
 
 local game = {}
 
-game.testing = true
+game.testing = false
 
 game.view = {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2, xratio = 1, yratio = 1}
 
@@ -242,9 +242,14 @@ function game.getCharacterObjectArea(character, object)
     local charx = character.x --+ game.view.x --- (love.graphics.getWidth()/2)
     local chary = character.y
     local objy = object.y - game.view.y + love.graphics.getHeight()/2
-    love.graphics.rectangle("line", object.x, 
-    object.y - game.view.y + love.graphics.getHeight()/2,
-    object.width, object.height)
+	
+	-- draw box around area
+	if game.testing then 
+		love.graphics.rectangle("line", object.x, 
+		object.y - game.view.y + love.graphics.getHeight()/2,
+		object.width, object.height)
+	end 
+	
 	if charx > tonumber(object.x) and chary > tonumber(objy) and 
         charx < object.x + object.width and 
         chary < objy + object.height then
@@ -260,6 +265,9 @@ function game.setupCharacter(chr)
     if nil == chr then
         character = {}
     end
+	
+	if game.testing then character.loot = 9999 end
+	
     local objects = TiledMap_Objects(game.levels.currentlevel)
     for k, object in pairs(objects) do
         objects[k].x = object.x - game.view.x + (love.graphics.getWidth()/2 )
@@ -271,7 +279,8 @@ function game.setupCharacter(chr)
     end
     game.tiledobjects = objects
 
-    local image = love.graphics.newImage('gfx/blank_strip.png')
+    --local image = love.graphics.newImage('gfx/blank_strip.png')
+	local image = love.graphics.newImage('gfx/test_char2_strip.png')
     image:setFilter('linear', 'nearest')
     local wh = 32 -- width, height of target frame
     local framecountx = 2
