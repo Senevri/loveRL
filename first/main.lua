@@ -34,9 +34,16 @@ require("libs.AnAL")
 
 math.setup()
 
-character = {}
+character = { area="naaaa"}
 
 function love.keypressed(key)
+	print (key)
+	if character ~= nil and character.area ~= nil then
+		for area, val in pairs(character.area) do
+			print (area)
+		end
+	end
+		
 	if key ==  'escape' then
 		love.event.push('quit')
 	end
@@ -51,28 +58,10 @@ function love.keypressed(key)
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
       		love.mouse.setVisible(state)
    	end
-	if character.area == "Shop" then 
 	
-		if key == "1" and 
-			character.loot >= game.shop.attack
-			then
-			character.attack.damage = character.attack.damage + 0.5
-			character.loot = character.loot - game.shop.attack
-		end
-
-		if key == "2" and 
-			character.loot >= game.shop.range
-			then
-			character.attack.range = character.attack.range + 0.5 
-			character.loot = character.loot - game.shop.range
-		end
-
-		if key == "3" and 
-			character.loot >= game.shop.speed 
-			then
-
-			character.speed = character.speed + 0.5 
-			character.loot = character.loot - game.shop.speed 
+	for i, script in ipairs(game.inputScripts) do
+		if (nil ~= script) then			
+			character, game, key = script(key, character, game)
 		end
 	end
 
@@ -80,7 +69,7 @@ function love.keypressed(key)
 	if game.testing == false then return end
 	if key == "f1" then 
 		game.paused = false
-		character.health = character.health +1
+		character.health = character.health + 1
 		game.levels.next()
 		if nil ~=  game.levels.currentlevel then 
 			character, game = game.loadLevelByIndex(game.levels.index, character)
@@ -101,13 +90,12 @@ function love.load()
 	game.sfx["pickup_loot"] = love.audio.newSource("sfx/Pickup_Coin.wav", static)
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
 
-	game.music["default"] = love.audio.newSource("3p_music/BoxCat_Games_-_12_-_Passing_Time.mp3", static)
+	game.music["default"] = love.audio.newSource("cc_music/8bit Dungeon Level.mp3", static)
 	game.music["default"]:setVolume(0.1)
 	
-	game.music["battle"] = love.audio.newSource("3p_music/BoxCat_Games_-_05_-_Battle_Boss.mp3", static)
+	game.music["battle"] = love.audio.newSource("cc_music/8bit Dungeon Boss.mp3", static)
 	game.music["battle"]:setVolume(0.1)
 	love.audio.play(game.music["default"])
-
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
@@ -154,7 +142,7 @@ function love.update(dt)
 	character.animation:update(dt)
     for i, creature in ipairs(game.creatures) do
         if creature.animation ~= nil then 
-            print("not nil")
+            --print("not nil")
             creature.animation:update(dt) 
         end
     end
@@ -164,7 +152,7 @@ times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
 
 function love.draw()
 
-	local ttime = love.timer.getMicroTime()
+	local ttime = love.timer.getTime()
 	character.portrait = game.portraits.default;
 	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
@@ -190,8 +178,8 @@ function love.draw()
 	end
 	r, g, b, a = love.graphics.getColor()
 
-	times.start = times.start + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.start = times.start + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 	--background for top bar
 		love.graphics.setColor(0,0,0,255)
@@ -221,9 +209,9 @@ function love.draw()
 	--end);
 	--love.graphics.draw(canvas, 0, 0)
 
-	times.middle = times.middle + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
-
+	times.middle = times.middle + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
+	character.area = {}
 	for i, to in  ipairs(game.tiledobjects) do 
 		--local to = game.tiledobjects[i]
 		if nil == to then break end
@@ -236,11 +224,13 @@ function love.draw()
 
 		local object = game.tiledobjects[i]
 		if nil == object or nil ~= object.gid then break end
-
-		character.area = game.getCharacterObjectArea(character,object)
+		local temparea = game.getCharacterObjectArea(character, object)
+		if nil ~= temparea then
+			character.area[temparea] = true;
+		end
 	end
-	times.endseg = times.endseg + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.endseg = times.endseg + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 	
 	-- run per-level custom script
 
@@ -249,8 +239,8 @@ function love.draw()
 		character, game = levelfunction(character, nil, game) 
 	end
 
-	times.custom = times.custom + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.custom = times.custom + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 
 	love.graphics.setColor(255,255,0,255)
@@ -292,8 +282,11 @@ function love.draw()
 		crtr = game.creatures[i]
 		if crtr == nil then break end
 		if crtr.health < 1 then 
-			table.remove(game.creatures, i)
-			game.createLoot(crtr.x, crtr.y)
+			if game.scripts.creatureSlain ~=nil then
+				game.scripts.creatureSlain(crtr)
+			end
+			game.createLoot(crtr.x + math.random(crtr.size), crtr.y + math.random(crtr.size))
+			table.remove(game.creatures, i)			
 		end
 
 		wh = 48
@@ -404,7 +397,7 @@ function love.draw()
 	love.graphics.setColor(0,255,32,220)
 	love.graphics.draw(marker, character.x, character.y, angle + math.halfPI, 1, 1, (marker:getHeight()/2), (marker:getWidth()/2))
 	love.graphics.setColor(r,g,b,a)
-	love.graphics.setCaption(title .. " (FPS: " .. love.timer.getFPS() .. ")")
+	love.window.setTitle(title .. " (FPS: " .. love.timer.getFPS() .. ")")
 
 	-- draw character portrait with assumption it's 256 by 256.
 	love.graphics.draw(character.portrait, screenw /2, screenh -64, 0, 0.5, 0.5, 128, 128)
@@ -414,8 +407,8 @@ function love.draw()
 		--fixme make proper
 		love.event.push("quit") 
 	end
-	times.rest = times.rest + (love.timer.getMicroTime() - ttime);
-	ttime = love.timer.getMicroTime()
+	times.rest = times.rest + (love.timer.getTime() - ttime);
+	ttime = love.timer.getTime()
 
 end
 

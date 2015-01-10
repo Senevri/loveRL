@@ -19,9 +19,6 @@
   <tile id="27" terrain="0,,0,0"/>
   <tile id="28" terrain=",0,0,0"/>
  </tileset>
- <imagelayer name="image-fu" width="19" height="16">
-  <image source="../gfx/Sky_bg.png"/>
- </imagelayer>
  <layer name="Tile Layer 1" width="19" height="16">
   <data>
    <tile gid="0"/>
@@ -1262,5 +1259,10 @@
  <objectgroup name="Object Layer 2" width="19" height="16">
   <object name="hidden" type="walkable" x="444" y="190" width="67" height="33"/>
   <object name="ItemRoom" type="walkable" x="510" y="158" width="69" height="97"/>
+  <object name="Chest" type="treasure" x="546" y="194" width="28" height="27">
+   <properties>
+    <property name="loot" value="50"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
