@@ -1,8 +1,10 @@
 loveRL
 ======
 
-Love2D action roguelike?
+Löve2D action roguelike?
 [https://www.love2d.org/]
+
+Currently works on Love2d 0.10.2
 
  * WASD and mouse controls, press left mouse button to move, combine with WASD for extra speed.
  * Right mouse shoots. 
@@ -19,3 +21,6 @@ current debug buttons:
 Some Creative Commons placeholder music
 Sound effects by BFXR.
 
+##Todo
+ * Death just quits the game. How rude.
+ * Content. 
