@@ -87,7 +87,7 @@ end
 
 function game.handleMouse(character, angle)
 
-    if love.mouse.isDown('l') then
+    if love.mouse.isDown(1) then
         local x, y, wx, wy
         x, y =  math.translate(character.x, character.y, angle, character.speed)
 
@@ -100,7 +100,7 @@ function game.handleMouse(character, angle)
 
     end
 
-    if love.mouse.isDown('r') then
+    if love.mouse.isDown(2) then
         character.portrait = game.portraits.attack
         if character.attack.cooldown > 0 then
             character.attack.cooldown = character.attack.cooldown -1

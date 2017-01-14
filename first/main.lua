@@ -21,7 +21,7 @@
 --	Done:
 ]]--
 
-local math = require ("first.math")
+local math = require ("first.my_math")
 local tiled = require ("libs.tiledmap") -- customized
 
 local game = require("first.game")
