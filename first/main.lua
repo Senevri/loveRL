@@ -258,13 +258,14 @@ function love.draw()
 
 
 	love.graphics.setColor(255,255,0,255)
+    -- FIXME game crashed on picking up loot
 	for i, loot in ipairs( game.loot ) do
-		love.graphics.circle('fill', loot.x, loot.y, 3+loot.value*2, 8-loot.value)
+		love.graphics.circle('fill', loot.x, loot.y, loot.size, 8-loot.value)
 
 		if nil == game.loot[i] then break end
 		local chr = character
 		local loot = game.loot[i]
-		if ((3+loot.value) > math.dist(chr.x, chr.y, loot.x+1+loot.value, loot.y+1+loot.value)) then
+		if ((loot.size + chr.size/2) > math.dist(chr.x, chr.y, loot.x+1+loot.value, loot.y+1+loot.value)) then
 			character.loot = chr.loot +  loot.value
 			table.remove(game.loot, i)
 			game.sfx.pickup_loot:stop()
@@ -299,6 +300,7 @@ function love.draw()
 			if game.scripts.creatureSlain ~=nil then
 				game.scripts.creatureSlain(crtr)
 			end
+            -- is this random causing money-in-walls?
 			game.createLoot(crtr.x + math.random(crtr.size), crtr.y + math.random(crtr.size))
 			table.remove(game.creatures, i)			
 		end

@@ -124,7 +124,7 @@ end
 
 
 
-function game.isWalkableTile(x,y, size)
+function game.isWalkableTile(x, y, size)
     if nil == size then
         size = 0
     end
@@ -208,7 +208,21 @@ end
 
 function game.createLoot(x,y) 
 	--FIXME: do not create loot inside a wall
-    local loot = { x = x, y = y, value = math.random(5) }
+    if not game.isWalkableTile(x, y) then
+        -- get nearest valid tile.
+        half_tile = 32
+        if game.isWalkableTile(x + half_tile, y) then 
+            x = x + half_tile
+        elseif game.isWalkableTile(x - half_tile, y) then
+            x = x - half_tile
+        elseif game.isWalkableTile(x, y + half_tile) then
+            y = y + half_tile
+        elseif game.isWalkableTile(x, y - half_tile) then
+            y = y - half_tile
+        end
+    end
+    local val = math.random(5)
+    local loot = { x = x, y = y, value = val, size = 3 + val * 2 }
     table.insert(game.loot, loot)
 end
 
@@ -360,10 +374,10 @@ function game.inShop()
 	love.graphics.rectangle("fill", 6, 60, 128, 80)
 	love.graphics.setColor(255,212,0,255)
     love.graphics.print("Sacrifice Loot", 10, 64)
-    love.graphics.print("attack " .. shop.attack, 10, 80)
-    love.graphics.print("range " .. shop.range, 10, 96)
-    love.graphics.print("speed " .. shop.speed, 10, 112)
-	love.graphics.print("health " .. shop.health, 10, 128)
+    love.graphics.print("[1]attack " .. shop.attack, 10, 80)
+    love.graphics.print("[2]range " .. shop.range, 10, 96)
+    love.graphics.print("[3]speed " .. shop.speed, 10, 112)
+	love.graphics.print("[4]health " .. shop.health, 10, 128)
     game.shop = shop
     love.graphics.setColor(r,g,b,a)
 	return game
