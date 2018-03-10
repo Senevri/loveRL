@@ -37,7 +37,7 @@ math.setup()
 character = { area="naaaa"}
 
 function love.keypressed(key)
-	print (key)
+	---print (key)
 	if character ~= nil and character.area ~= nil then
 		for area, val in pairs(character.area) do
 			print (area)
@@ -423,10 +423,17 @@ function love.draw()
 		--fixme make proper
 		love.event.push("quit") 
 	end
-	times.rest = times.rest + (love.timer.getTime() - ttime);
+	times.rest = times.rest + (love.timer.getTime() - ttime)
 	ttime = love.timer.getTime()
-
+	local result = ""
+    ---local joysticks = love.joystick.getJoysticks()
+	---for i, joystick in ipairs(joysticks) do
+    ---    love.graphics.print(i .. " " .. joystick:getName(), 10, i * 20)
+    ---end
+	
 end
+
+
 
 function drawCreature(crtr) 
     local crwidth=crtr.gfx:getWidth()

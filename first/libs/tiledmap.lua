@@ -4,6 +4,7 @@
 -- NOTE : function ReplaceMapTileClass (tx,ty,oldTileType,newTileType,fun_callback) end
 -- NOTE : function TransmuteMap (from_to_table) end -- from_to_table[old]=new
 -- NOTE : function GetMousePosOnMap () return gMouseX+gCamX-gScreenW/2,gMouseY+gCamY-gScreenH/2 end
+--local inspect = require ('libs.inspect')
 
 kTileSize = 32
 kMapTileTypeEmpty = 0
@@ -14,7 +15,7 @@ local min = math.min
 local abs = math.abs
 gTileMap_LayerInvisByName = {}
 gTileGfx = {}
-   
+tileProperties = {}   
 
 -- s for spacing
 function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix, m, s)
@@ -56,6 +57,11 @@ end
 function TiledMap_GetTileByGid(gid)	
 	local image = gTileGfx[tonumber(gid)]
 	return image
+end
+
+function TiledMap_GetTileProperties(gid) 
+    props = tileProperties[tonumber(gid)-1] -- gid seems to be one larger than index.
+    return props
 end
 
 function TiledMap_GetMapW () return gMapLayers.width end
@@ -219,15 +225,42 @@ end
 
 
 -- ***** ***** ***** ***** ***** parsing the tilemap xml file
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
 
 local function getTilesets(node)
     local tiles = {}
+    local properties = {}
     for k, sub in ipairs(node) do
-        if (sub.label == "tileset") then
+        if (sub.label == "tileset") then            
             tiles[tonumber(sub.xarg.firstgid)] = sub[1].xarg.source
+            for l, child in ipairs(sub) do                        
+                if (child.label == 'tile') then
+                    properties[tonumber(child.xarg.id)] = child.xarg
+                end
+            end
         end
     end
-    return tiles
+    return tiles,  properties
+end
+
+local function getTileProperties(node)
+    local properties = {}
+    for k, sub in ipairs(node) do
+        if sub.label == "tile" then
+            properties[tonumber(sub.xarg.id)] = {}
+        end
+    end
 end
 
 local function getLayers(node)
@@ -308,7 +341,8 @@ end
 
 function TiledMap_Parse(filename)
     local xml = LoadXML(love.filesystem.read(filename))
-    local tiles = getTilesets(xml[2])
+    local tiles, properties = getTilesets(xml[2])
+    tileProperties = properties
     local layers = getLayers(xml[2])
     return tiles, layers
 end

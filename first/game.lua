@@ -121,17 +121,15 @@ function game.handleMouse(character, angle)
     return character
 end
 
-
-
-
 function game.isWalkableTile(x, y, size)
     if nil == size then
         size = 0
     end
     local tx, ty = TiledMap_GetTilePosUnderMouse(x+size/2, y+size/2, game.view.x, game.view.y)
-    local tiletype = TiledMap_GetMapTile(tx, ty, 1)
+    local gid = TiledMap_GetMapTile(tx, ty, 1)
     --FIXME magic tile type
-    if 10 == tiletype then
+	local tiletype = TiledMap_GetTileProperties(gid).type
+    if "walkable" == tiletype then
         return true 
     else return false end
 end
