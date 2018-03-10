@@ -1,5 +1,5 @@
 --[[
-	First LÖVE2d Game. 
+	First LÃ¶VE2d Game. 
 	Author: Esa Karjalainen
 	(esa.karjalainen (at) gmail.com)
 	Tiled maps, Diablolike
@@ -164,25 +164,34 @@ end
 
 times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
 
+function showSplash()
+	local screenw = love.graphics.getWidth()
+	local screenh = love.graphics.getHeight()
+	
+	local sw, sh, aspect,screenaspect
+	sw = splash:getWidth()
+	sh = splash:getHeight()
+
+	aspect = sw/sh
+	screenaspect = screenw/screenh
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(splash, screenw/2,screenh/2, 0, 
+		love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
+		sw/2, sh/2)
+end
+
+
 function love.draw()
 
 	local ttime = love.timer.getTime()
-	character.portrait = game.portraits.default;
-	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
 	local screenh = love.graphics.getHeight()
-	if game.paused then 
-		local sw, sh, aspect,screenaspect
-		sw = splash:getWidth()
-		sh = splash:getHeight()
 	
-		aspect = sw/sh
-		screenaspect = screenw/screenh
-
-		love.graphics.setColor(255,255,255,255)
-		love.graphics.draw(splash, screenw/2,screenh/2, 0, 
-			love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
-			sw/2, sh/2)
+	character.portrait = game.portraits.default;
+	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
+	if game.paused then 
+		showSplash()
 		return 
 	end
 
@@ -196,30 +205,30 @@ function love.draw()
 	ttime = love.timer.getTime()
 
 	--background for top bar
-		love.graphics.setColor(0,0,0,255)
-		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
+	love.graphics.setColor(0,0,0,255)
+	love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
 
-		love.graphics.setColor(255,255,255,255)
-		TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
-		--game.view.x = character.x
-		--game.view.y = character.y 
-		--TiledMap_DrawNearCam(character.x,character.y, nil)
-		game.adjustObjectPositions()	
-		local rsize = 16
-		local mul = {1, 2, 4, 8}
-		for i, img in ipairs(crgfx) do
-			love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
-		end
+	love.graphics.setColor(255,255,255,255)
+	TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
+	--game.view.x = character.x
+	--game.view.y = character.y 
+	--TiledMap_DrawNearCam(character.x,character.y, nil)
+	game.adjustObjectPositions()	
+	local rsize = 16
+	local mul = {1, 2, 4, 8}
+	for i, img in ipairs(crgfx) do
+		love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
+	end
 
-		variable = variable + 0.01
-		if variable == 1 then
-			variable = 0
-		end
-		love.graphics.setColor(0, 255, 0, 250)
-		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
+	variable = variable + 0.01
+	if variable == 1 then
+		variable = 0
+	end
+	love.graphics.setColor(0, 255, 0, 250)
+	love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
 
-		love.graphics.setColor(r, g, b, a)
+	love.graphics.setColor(r, g, b, a)
 	--end);
 	--love.graphics.draw(canvas, 0, 0)
 

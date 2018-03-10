@@ -61,6 +61,9 @@ end
 
 function TiledMap_GetTileProperties(gid) 
     props = tileProperties[tonumber(gid)-1] -- gid seems to be one larger than index.
+    if nil == props then
+        props = {}
+    end
     return props
 end
 
