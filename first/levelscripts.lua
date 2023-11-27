@@ -133,9 +133,12 @@ function scripts.bosslevel(character, condition, game)
 	if condition == "init" then
 		TiledMap_SetLayerInvisByName("Hidden")
 		TiledMap_SetLayerInvisByName("Hidden2")
-		game.music.default:stop();
-		game.music.battle:play();
-
+        if nil ~= game.music.default then
+		    game.music.default:stop();
+        end
+        if nil ~= game.music.battle then
+		    game.music.battle:play();
+        end
 		--table.insert(game.inputScripts, shop)
 	else
 

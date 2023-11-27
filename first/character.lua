@@ -2,14 +2,14 @@ function setupCharacter(chr, game)
     local character = chr
     if nil == chr then
         character = {}
-        character.loot = 0
+        character.loot = 10
         character.speed = 2
         character.max_speed = 10
         character.health = 6
         character.attack = {damage=1, range=1, cooldown = 0, rate = 1, speed = 4}
-        character.portrait = game.portraits.default
     end
 
+    character.portrait = game.portraits.default
 	if game.testing then character.loot = 9999 end
     local objects = TiledMap_Objects(game.levels.currentlevel)
     for k, object in pairs(objects) do

@@ -1,5 +1,5 @@
 --[[
-	First L�VE2d Game.
+	First LöVE2d Game.
 	Author: Esa Karjalainen
 	(esa.karjalainen (at) gmail.com)
 	Tiled maps, Diablolike
@@ -37,7 +37,7 @@ math.setup()
 character = { area="naaaa"}
 
 function love.keypressed(key)
-	print (key)
+	---print (key)
 	if character ~= nil and character.area ~= nil then
 		for area, val in pairs(character.area) do
 			print (area)
@@ -134,8 +134,9 @@ function love.load()
 	variable = 0
 	-- title = love.graphics.getCaption()
 	title = "loveRL"
+	game.setup()
 	character, game = game.loadLevelByIndex(1)
-
+	print(character.portrait)
 
 	-- create directional display marker
 	local markerimage = love.graphics.newImage('gfx/marker.png')
@@ -159,7 +160,6 @@ function love.load()
 
 	--love.graphics.draw(splash, 0, 0, 0, sw/love.graphics.getWidth(), sh/love.graphics.getHeight())
 	game.paused = true
-	game.setup()
 
 end
 
@@ -186,7 +186,6 @@ function drawPauseScreen(screenw, screenh)
 	aspect = sw/sh
 	screenaspect = screenw/screenh
 	xscale = screenw/(sw*SCALE)
-	print(aspect, screenaspect)
 
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(splash, screenw/2,screenh/2, 0,
@@ -199,8 +198,6 @@ function love.draw()
 	love.graphics.scale(SCALE)
 
 	local ttime = love.timer.getTime()
-	character.portrait = game.portraits.default;
-	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
 	local screenh = love.graphics.getHeight()
 	if game.paused then
@@ -461,15 +458,19 @@ function love.draw()
 		--fixme make proper
 		love.event.push("quit")
 	end
-	times.rest = times.rest + (love.timer.getTime() - ttime);
+	times.rest = times.rest + (love.timer.getTime() - ttime)
 	ttime = love.timer.getTime()
-
-
+	local result = ""
+    ---local joysticks = love.joystick.getJoysticks()
+	---for i, joystick in ipairs(joysticks) do
+    ---    love.graphics.print(i .. " " .. joystick:getName(), 10, i * 20)
+    ---end
 
 end
 
+
 function drawCreature(crtr)
-	local crwidth=crtr.gfx:getWidth()
+    local crwidth=crtr.gfx:getWidth()
     local crheight=crtr.gfx:getHeight()
     if crtr.animation == nil then
         love.graphics.draw(crtr.gfx,

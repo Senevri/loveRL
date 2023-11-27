@@ -4,6 +4,7 @@
 -- NOTE : function ReplaceMapTileClass (tx,ty,oldTileType,newTileType,fun_callback) end
 -- NOTE : function TransmuteMap (from_to_table) end -- from_to_table[old]=new
 -- NOTE : function GetMousePosOnMap () return gMouseX+gCamX-gScreenW/2,gMouseY+gCamY-gScreenH/2 end
+--local inspect = require ('libs.inspect')
 
 kTileSize = 32
 kMapTileTypeEmpty = 0
@@ -14,7 +15,7 @@ local min = math.min
 local abs = math.abs
 gTileMap_LayerInvisByName = {}
 gTileGfx = {}
-   
+tileProperties = {}
 
 -- s for spacing
 function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix, m, s)
@@ -23,7 +24,7 @@ function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix
     spritepath_removeold = spritepath_removeold or "../"
     spritepath_prefix = spritepath_prefix or ""
     kTileSize = tilesize or kTileSize or 32
-    
+
     local tiletype,layers = TiledMap_Parse(filepath)
     gMapLayers = layers
     for first_gid,path in pairs(tiletype) do
@@ -34,7 +35,7 @@ function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix
 		startpoint, endpoint = string.find(string.reverse(path), spritepath_removeold )
 		if nil == endpoint then
 			path = spritepath_prefix .. path
-		else 
+		else
 		path = spritepath_prefix .. string.sub(path, string.len(path) - (endpoint-1))
 		end
 		local raw = love.image.newImageData(path)
@@ -53,9 +54,17 @@ function TiledMap_Load (filepath,tilesize,spritepath_removeold,spritepath_prefix
 	gTileGfx = gTileGfx
 end
 
-function TiledMap_GetTileByGid(gid)	
+function TiledMap_GetTileByGid(gid)
 	local image = gTileGfx[tonumber(gid)]
 	return image
+end
+
+function TiledMap_GetTileProperties(gid)
+    props = tileProperties[tonumber(gid)-1] -- gid seems to be one larger than index.
+    if nil == props then
+        props = {}
+    end
+    return props
 end
 
 function TiledMap_GetMapW () return gMapLayers.width end
@@ -66,10 +75,10 @@ function TiledMap_GetMapWUsed ()
     local maxx = 0
     local miny = 0
     local maxy = 0
-    for layerid,layer in pairs(gMapLayers) do 
+    for layerid,layer in pairs(gMapLayers) do
         if (type(layer) == "table") then for ty,row in pairs(layer) do
-            if (type(row) == "table") then for tx,t in pairs(row) do 
-                if (t and t ~= kMapTileTypeEmpty) then 
+            if (type(row) == "table") then for tx,t in pairs(row) do
+                if (t and t ~= kMapTileTypeEmpty) then
                     miny = min(miny,ty)
                     maxy = max(maxy,ty)
                     maxx = max(maxx,tx)
@@ -88,8 +97,8 @@ function TiledMap_GetNearestTileByTypeOnLayer (x,y,z,iTileType,maxrad)
     local h = TiledMap_GetMapW()
     local maxrad2 = max(x,w-x,y,h-y) if (maxrad) then maxrad2 = min(maxrad2,maxrad) end
     if (TiledMap_GetMapTile(x,y,z) == iTileType) then return x,y end
-    for r = 1,maxrad2 do 
-        for i=-r,r do 
+    for r = 1,maxrad2 do
+        for i=-r,r do
             local xa,ya = x+i,y-r if (TiledMap_GetMapTile(xa,ya,z) == iTileType) then return xa,ya end -- top
             local xa,ya = x+i,y+r if (TiledMap_GetMapTile(xa,ya,z) == iTileType) then return xa,ya end -- bot
             local xa,ya = x-r,y+i if (TiledMap_GetMapTile(xa,ya,z) == iTileType) then return xa,ya end -- left
@@ -114,8 +123,8 @@ function TiledMap_ListAllOfTypeOnLayer (layerid,iTileType)
     local res = {}
     local w = TiledMap_GetMapW()
     local h = TiledMap_GetMapH()
-    for x=0,w-1 do 
-    for y=0,h-1 do 
+    for x=0,w-1 do
+    for y=0,h-1 do
         if (TiledMap_GetMapTile(x,y,layerid) == iTileType) then table.insert(res,{x=x,y=y}) end
     end
     end
@@ -125,7 +134,7 @@ end
 function TiledMap_GetLayerZByName (layername) for z,layer in ipairs(gMapLayers) do if (layer.name == layername) then return z end end end
 function TiledMap_SetLayerInvisByName (layername) gTileMap_LayerInvisByName[layername] = true end
 
-function TiledMap_SetLayerVisibleByName (layername) 
+function TiledMap_SetLayerVisibleByName (layername)
 	if gTileMap_LayerInvisByName[layername] then
 		gTileMap_LayerInvisByName[layername] = false
 	end
@@ -147,7 +156,7 @@ function TiledMap_DrawNearCam (camx,camy,fun_layercallback, screenw, screenh)
     local screen_h = screenh or love.graphics.getHeight()
     local minx,maxx = floor((camx-screen_w/2)/kTileSize),ceil((camx+screen_w/2)/kTileSize)
     local miny,maxy = floor((camy-screen_h/2)/kTileSize),ceil((camy+screen_h/2)/kTileSize)
-    for z = 1,#gMapLayers do 
+    for z = 1,#gMapLayers do
     if (fun_layercallback) then fun_layercallback(z,gMapLayers[z]) end
     if (TiledMap_IsLayerVisible(z)) then
     for x = minx,maxx do
@@ -219,15 +228,42 @@ end
 
 
 -- ***** ***** ***** ***** ***** parsing the tilemap xml file
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
 
 local function getTilesets(node)
     local tiles = {}
+    local properties = {}
     for k, sub in ipairs(node) do
         if (sub.label == "tileset") then
             tiles[tonumber(sub.xarg.firstgid)] = sub[1].xarg.source
+            for l, child in ipairs(sub) do
+                if (child.label == 'tile') then
+                    properties[tonumber(child.xarg.id)] = child.xarg
+                end
+            end
         end
     end
-    return tiles
+    return tiles,  properties
+end
+
+local function getTileProperties(node)
+    local properties = {}
+    for k, sub in ipairs(node) do
+        if sub.label == "tile" then
+            properties[tonumber(sub.xarg.id)] = {}
+        end
+    end
 end
 
 local function getLayers(node)
@@ -265,39 +301,39 @@ function TiledMap_Objects(filename, objectname)
 	local xml = LoadXML(love.filesystem.read(filename))
 	local objects = {}
 	for k, sub in ipairs(xml[2]) do
-		if (sub.label == "objectgroup") then 
-			print ("found objectgroup")
+		if (sub.label == "objectgroup") then
+			--print ("found objectgroup")
 			for l, child in ipairs(sub) do
 				to = child.xarg
 				to.properties = nil
-				if child[1] ~= nil then 					
+				if child[1] ~= nil then
 					to.properties = {}
 					local property = {}
-					for i, prop in ipairs(child[1]) do						
-						
+					for i, prop in ipairs(child[1]) do
+
 						local name = prop.xarg.name
 						local value = prop.xarg.value
 						--property[name]=value
 						property.name = name
 						property.value = value
 					end
-					table.insert(to.properties, property)						
+					table.insert(to.properties, property)
 				end
-				if objectname == nil then 
+				if objectname == nil then
 					table.insert(objects, to)
 				else
-					if child.xarg.name == objectname then 					
+					if child.xarg.name == objectname then
 						table.insert(objects, to)
 					end
-				end				
+				end
 			end
 		end
 	end
 	return objects
 end
 
-function TiledMap_Object(objectname, objects) 
-	for k, v in pairs(objects) do 
+function TiledMap_Object(objectname, objects)
+	for k, v in pairs(objects) do
 		if v.name == objectname then
 			return v
 		end
@@ -308,7 +344,8 @@ end
 
 function TiledMap_Parse(filename)
     local xml = LoadXML(love.filesystem.read(filename))
-    local tiles = getTilesets(xml[2])
+    local tiles, properties = getTilesets(xml[2])
+    tileProperties = properties
     local layers = getLayers(xml[2])
     return tiles, layers
 end

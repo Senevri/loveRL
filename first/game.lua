@@ -142,17 +142,15 @@ function game.handleMouse(character, angle)
     return character
 end
 
-
-
-
 function game.isWalkableTile(x, y, size)
     if nil == size then
         size = 0
     end
     local tx, ty = TiledMap_GetTilePosUnderMouse(x+size/2, y+size/2, game.view.x, game.view.y)
-    local tiletype = TiledMap_GetMapTile(tx, ty, 1)
+    local gid = TiledMap_GetMapTile(tx, ty, 1)
     --FIXME magic tile type
-    if 10 == tiletype then
+	local tiletype = TiledMap_GetTileProperties(gid).type
+    if "walkable" == tiletype then
         return true
     else return false end
 end
@@ -331,6 +329,7 @@ function game.loadLevelByIndex(index, character)
     game.view.xratio = love.graphics.getWidth() / (TiledMap_GetMapW() * tilesize )
     game.view.yratio = love.graphics.getHeight() / (TiledMap_GetMapH() * tilesize )
     character = game.setupCharacter(character, game)
+    print(character.portrait)
 
     local levelfunction = game.levels.getFunction(index)
     if nil ~= levelfunction then
