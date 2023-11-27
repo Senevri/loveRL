@@ -134,8 +134,8 @@ function love.load()
 	variable = 0
 	-- title = love.graphics.getCaption()
 	title = "loveRL"
-
 	character, game = game.loadLevelByIndex(1)
+
 
 	-- create directional display marker
 	local markerimage = love.graphics.newImage('gfx/marker.png')
@@ -160,6 +160,7 @@ function love.load()
 	--love.graphics.draw(splash, 0, 0, 0, sw/love.graphics.getWidth(), sh/love.graphics.getHeight())
 	game.paused = true
 	game.setup()
+
 end
 
 function love.update(dt)
@@ -174,6 +175,9 @@ end
 
 times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
 
+DEFAULTSIZE = 320
+SCALE = (love.graphics.getWidth()/3)/DEFAULTSIZE
+--SCALE=1
 function drawPauseScreen(screenw, screenh)
 	local sw, sh, aspect,screenaspect
 	sw = splash:getWidth()
@@ -181,15 +185,18 @@ function drawPauseScreen(screenw, screenh)
 
 	aspect = sw/sh
 	screenaspect = screenw/screenh
+	xscale = screenw/(sw*SCALE)
+	print(aspect, screenaspect)
 
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(splash, screenw/2,screenh/2, 0,
-		love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
-		sw/2, sh/2)
+		love.graphics.getWidth()/sw*aspect/screenaspect/SCALE, love.graphics.getHeight()/sh/SCALE,
+		((sw+sw*(aspect-1)/2)/2)*(SCALE), (sh/2)*SCALE)
+
 end
 
-
 function love.draw()
+	love.graphics.scale(SCALE)
 
 	local ttime = love.timer.getTime()
 	character.portrait = game.portraits.default;
@@ -210,31 +217,35 @@ function love.draw()
 	times.start = times.start + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
 
+
+
 	--background for top bar
-		love.graphics.setColor(0,0,0,255)
-		love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 24)
-
-		love.graphics.setColor(255,255,255,255)
-		TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
-		--game.view.x = character.x
-		--game.view.y = character.y
-		--TiledMap_DrawNearCam(character.x,character.y, nil)
-		game.adjustObjectPositions()
-		local rsize = 16
-		local mul = {1, 2, 4, 8}
-		for i, img in ipairs(crgfx) do
-			love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/320, rsize*mul[i]/320, 160, 160)
-		end
-
-		variable = variable + 0.01
-		if variable == 1 then
-			variable = 0
-		end
-		love.graphics.setColor(0, 255, 0, 250)
-		love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
 
 
-		love.graphics.setColor(r, g, b, a)
+	love.graphics.setColor(32,32,32,255)
+	love.graphics.rectangle('fill', 0,0,love.graphics.getWidth(), 12*SCALE)
+
+	love.graphics.setColor(255,255,255,255)
+	TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
+	--game.view.x = character.x
+	--game.view.y = character.y
+	--TiledMap_DrawNearCam(character.x,character.y, nil)
+	game.adjustObjectPositions()
+	local rsize = 16
+	local mul = {1, 2, 4, 8}
+	for i, img in ipairs(crgfx) do
+		love.graphics.draw(img, screenw-(2*rsize*mul[i]), 80, variable, rsize*mul[i]/DEFAULTSIZE, rsize*mul[i]/DEFAULTSIZE, 160, 160)
+	end
+
+	variable = variable + 0.01
+	if variable == 1 then
+		variable = 0
+	end
+	love.graphics.setColor(0, 255, 0, 250)
+	love.graphics.circle('line', love.mouse.getX(), love.mouse.getY(), 10, 10)
+
+
+	love.graphics.setColor(r, g, b, a)
 	--end);
 	--love.graphics.draw(canvas, 0, 0)
 
@@ -302,6 +313,9 @@ function love.draw()
 		love.graphics.print("Range: " .. character.attack.range, 300, 3)
 
 		love.graphics.print("Speed: " .. character.speed, 400, 3)
+		love.graphics.print("Bulletspd: " .. character.attack.speed, 500, 3)
+		love.graphics.print("Firerate: " .. character.attack.rate, 600, 3)
+
 	--end)
 	--love.graphics.draw(canvas)
 
@@ -422,7 +436,12 @@ function love.draw()
 
 
 	--love.graphics.draw(character.gfx, character.x, character.y, 0, 1, 1, (character.gfx:getHeight()/2), (character.gfx:getWidth()/2))
-	character.animation:draw(character.x-character.size, character.y-character.size)
+
+	xfacing = -2*(math.round(angle/math.pi) % 2) +1
+
+	character.animation:draw(
+		character.x, character.y,
+		0, xfacing, 1, character.size, character.size )
     -- local frame = character.animation:getCurrentFrame() --returns index
 	-- love.graphics.draw(frame, character.x, character.y, 0, 1, 1, frame:getHeight()/2, frame:getWidth()/2)
 	love.graphics.setColor(0,255,32,220)
@@ -431,7 +450,11 @@ function love.draw()
 	love.window.setTitle(title .. " (FPS: " .. love.timer.getFPS() .. ")")
 
 	-- draw character portrait with assumption it's 256 by 256.
-	love.graphics.draw(character.portrait, screenw /2, screenh -64, 0, 0.5, 0.5, 128, 128)
+	love.graphics.draw(
+		character.portrait,
+		screenw /2, screenh-(character.portrait:getHeight()/2)/2, 0,
+		1/2, 1/2,
+		character.portrait:getWidth()/2, character.portrait:getHeight()/2)
 
 	--- check if player dead
 	if character.health <= 0 then
@@ -441,10 +464,12 @@ function love.draw()
 	times.rest = times.rest + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
 
+
+
 end
 
 function drawCreature(crtr)
-    local crwidth=crtr.gfx:getWidth()
+	local crwidth=crtr.gfx:getWidth()
     local crheight=crtr.gfx:getHeight()
     if crtr.animation == nil then
         love.graphics.draw(crtr.gfx,

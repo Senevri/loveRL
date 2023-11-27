@@ -3,7 +3,6 @@
 --
 ]]--
 
-
 local game = {}
 
 game.testing = false
@@ -17,6 +16,17 @@ game.loot = {}
 
 game.inputScripts = {}
 
+game.crgfx = {
+    spider = "gfx/spidercreature_320.png",
+    goblin = "gfx/goblincreature_320.png",
+    colossus = "gfx/colossuscreature_320.png",
+    dragon = "gfx/bosscreature_320.png",
+}
+
+game.animationsources = {
+    spider = {gfx = "gfx/spidercreature_strip.png", delay=0.2, frames=3, framesize=320}
+}
+
 function game.setup()
     portraits = {
         default = 'portrait_default.png',
@@ -26,6 +36,10 @@ function game.setup()
     }
     for key, value in pairs(portraits) do
         game.portraits[key] = love.graphics.newImage('gfx/' .. value)
+    end
+
+    for k, _ in pairs(game.crgfx) do
+        game.createCreatureAnimation(k)
     end
 end
 
@@ -47,12 +61,12 @@ function game.adjustObjectPositions()
         game.view.y = game.view.y - game.adjusting.direction
         game.adjusting.amount = game.adjusting.amount -1
     else
-        if character.y > 2*love.graphics.getHeight()/3 then
-            game.adjusting.amount = 16--love.graphics.getHeight()/8
+        if character.y*SCALE > 2*love.graphics.getHeight()/3 then
+            game.adjusting.amount = 16*SCALE--love.graphics.getHeight()/8
             game.adjusting.direction = -1
         end
-        if character.y < 32 then --love.graphics.getHeight()/8 then
-            game.adjusting.amount = 32--love.graphics.getHeight()/8
+        if character.y*SCALE < character.size*2*SCALE then --love.graphics.getHeight()/8 then
+            game.adjusting.amount = 32*SCALE--love.graphics.getHeight()/8
             game.adjusting.direction = 1
         end
     end
@@ -113,6 +127,8 @@ function game.handleMouse(character, angle)
         else
 
             local projectile = game.createProjectile(character.x, character.y, character.direction)
+            projectile.rate = projectile.rate*character.attack.rate
+            projectile.speed = projectile.speed + character.attack.speed
             character.attack.cooldown = 60/projectile.rate
             --love.audio.play(game.sfx.attack)
             if 0 >= game.sfxplaying then
@@ -157,24 +173,12 @@ end
 game.sfxplaying = 0
 
 function game.createProjectile(x, y, direction)
-    local projectile = {x = x, y = y, direction = direction, age = 0, speed=4, rate =30 }
+    local projectile = {x = x, y = y, direction = direction, age = 0, speed=1, rate =1 }
     table.insert(game.projectiles, projectile)
     return projectile
 end
 
 -- TODO: Distinct creatures
-
-game.crgfx = {
-    spider = "gfx/spidercreature_320.png",
-    goblin = "gfx/goblincreature_320.png",
-    colossus = "gfx/colossuscreature_320.png",
-    dragon = "gfx/bosscreature_320.png",
-}
-
-game.animationsources = {
-    spider = "gfx/spidercreature_strip.png"
-}
-
 
 function game.createCreature(x,y,direction, size, health, crtype)
     local creature = {
@@ -187,13 +191,24 @@ function game.createCreature(x,y,direction, size, health, crtype)
 	return creature
 end
 
+game.animations = {}
+
 function game.createCreatureAnimation(crtype)
+    love.graphics.scale(1)
+    for k, anim in pairs(game.animations) do
+        if k == crtype then
+            print(game.animations)
+            local copy = {}
+            setmetatable(copy, {__index = anim })
+            return copy
+        end
+    end
     local animation = nil
     local src = game.animationsources[crtype]
     if (nil ~= src) then
         --print(src)
-        local image = love.graphics.newImage(src)
-        local canvas = love.graphics.newCanvas(320*1, 320)
+        local image = love.graphics.newImage(src.gfx)
+        local canvas = love.graphics.newCanvas(src.framesize*src.frames, src.framesize)
         canvas:renderTo(function()
             love.graphics.draw(image, 0, 0, 0,
             canvas:getWidth()/image:getWidth(),
@@ -201,11 +216,14 @@ function game.createCreatureAnimation(crtype)
         end)
         if crtype == "spider" then
             animation = newAnimation(canvas,
-            320, 320, 0.2, 2, 1
+            src.framesize, src.framesize, src.delay, src.frames
             )
         end
-        animation:play();
+
         print ("framecount: " .. #animation.frames)
+        print("created anim " ..crtype .. ": " .. src.gfx)
+        game.animations[crtype] = animation
+        animation:play();
     end
     return animation
 end
@@ -287,56 +305,6 @@ function game.getCharacterObjectArea(character, object)
 end
 
 
-function game.setupCharacter(chr)
-    local character = chr
-    if nil == chr then
-        character = {}
-    end
-
-	if game.testing then character.loot = 9999 end
-
-    local objects = TiledMap_Objects(game.levels.currentlevel)
-    for k, object in pairs(objects) do
-        objects[k].x = object.x - game.view.x + (love.graphics.getWidth()/2 )
-        objects[k].y = object.y - game.view.y + (love.graphics.getHeight()/2 )
-        if object.name == "Start" then
-            character.x = object.x + object.width/2 + 6
-            character.y = object.y + object.height/2 + 6
-        end
-    end
-    game.tiledobjects = objects
-
-    --local image = love.graphics.newImage('gfx/blank_strip.png')
-	local image = love.graphics.newImage('gfx/test_char2_strip.png')
-    image:setFilter('linear', 'nearest')
-    local wh = 32 -- width, height of target frame
-    local framecountx = 2
-    character.size = 16
-    character.gfx = love.graphics.newCanvas(wh * framecountx,wh)
-    character.gfx:renderTo(function()
-        r, g, b, a = love.graphics.getColor()
-        --[[
-        love.graphics.circle('fill', 6,6,5,30)
-        ]]--
-        -- lots of extra space per frame, so...
-        love.graphics.draw(image, 0, 0, 0, (framecountx * (wh)/(image:getWidth())), ((wh)/image:getHeight()), 0, 0)
-        love.graphics.setColor(r, g, b, a)
-        --love.graphics.line(5,1, 6,2)
-    end)
-
-    --character.gfx = image
-    character.animation = newAnimation(character.gfx, 32,32,0.5, 2)
-	character.area = {}
-    if nil == chr then
-        character.loot = 0
-        character.speed = 1.5
-        character.health = 6
-        character.attack = {damage=1, range=1, cooldown = 0}
-        character.portrait = game.portraits.default
-    end
-    character.invincibility = 0
-    return character
-end
 
 
 game.tiledobjects = {}
@@ -348,9 +316,12 @@ game.shop = {}
 game.levels = require("first.levels")
 game.levels.init(game)
 
+game.setupCharacter = require("first.character")
+
 function game.loadLevelByIndex(index, character)
     game.loot = {}
     game.creatures = {}
+
     game.view = {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2, xratio = 1, yratio = 1}
 
     game.levels.seekByIndex(index)
@@ -359,7 +330,7 @@ function game.loadLevelByIndex(index, character)
     TiledMap_Load(game.levels.currentlevel, tilesize, '/', "tiled/", 1, 1)
     game.view.xratio = love.graphics.getWidth() / (TiledMap_GetMapW() * tilesize )
     game.view.yratio = love.graphics.getHeight() / (TiledMap_GetMapH() * tilesize )
-    character = game.setupCharacter(character)
+    character = game.setupCharacter(character, game)
 
     local levelfunction = game.levels.getFunction(index)
     if nil ~= levelfunction then
@@ -377,23 +348,39 @@ function game.inShop()
     local r, g, b, a = love.graphics.getColor()
 
     local shop = {
-        attack = (character.attack.damage + 0.5) *6,
-        range = (character.attack.range + 0.5) *6,
-        speed = (character.speed + 0.5) *6,
-		health = 5
+        {item="attack", cost=(character.attack.damage + 0.5) *6},
+        {item="range", cost = (character.attack.range + 0.5) *6},
+        {item="movement", cost = (character.speed + 0.5) *6},
+        {item="firerate", cost = (character.attack.rate + 1)},
+        {item="bulletspeed", cost = (character.attack.speed + 1)},
+		{item="health", cost = 5}
     }
 
-	love.graphics.setColor(0,0,16,144)
-	love.graphics.rectangle("fill", 6, 60, 128, 80)
-	love.graphics.setColor(255,212,0,255)
-    love.graphics.print("Sacrifice Loot", 10, 64)
-    love.graphics.print("[1]attack " .. shop.attack, 10, 80)
-    love.graphics.print("[2]range " .. shop.range, 10, 96)
-    love.graphics.print("[3]speed " .. shop.speed, 10, 112)
-	love.graphics.print("[4]health " .. shop.health, 10, 128)
-    game.shop = shop
+    prices = {}
+    for _, v in ipairs(shop) do
+        prices[v.item] = v.cost
+    end
+
+    game.drawShopUI(shop)
+    game.shop = prices
     love.graphics.setColor(r,g,b,a)
 	return game
+end
+
+function game.drawShopUI(shop)
+    local x = 4 + character.x + character.size/2
+    local y = 4 + character.y - character.size/2
+
+    local rowsize = 16
+
+	love.graphics.setColor(0,0,16,144)
+	love.graphics.rectangle("fill", x-4, y-4, 128, 4+(1 + #shop) * rowsize)
+	love.graphics.setColor(255,212,0,255)
+    love.graphics.print("Sacrifice Loot", x, y)
+
+    for i, v in ipairs(shop) do
+        love.graphics.print("[" .. tostring(i) .. "]" .. v.item .. " " .. v.cost, x, y+i*rowsize)
+    end
 end
 
 return game

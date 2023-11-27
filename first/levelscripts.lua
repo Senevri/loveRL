@@ -14,39 +14,43 @@ local creatureSpecs = {
 }
 
 function shop(key, character, game)
+    if character.area and character.area["Shop"] then
+        print("Shop transaction - " .. tostring(key))
 
-	if nil ~= character.area and character.area["Shop"] then
-        print ("shop transaction")
-		if key == "1" and
-			character.loot >= game.shop.attack
-			then
-			character.attack.damage = character.attack.damage + 0.5
-			character.loot = character.loot - game.shop.attack
+        local shopItems = {
+            {key = "1", stat = "damage", cost = game.shop.attack},
+            {key = "2", stat = "range", cost = game.shop.range},
+            {key = "3", stat = "movement", cost = game.shop.movement},
+            {key = "4", stat = "rate", cost = game.shop.firerate},
+			{key = "5", stat = "speed", cost = game.shop.bulletspeed},
+			{key = "6", stat = "health", cost = game.shop.health}
+        }
+
+		for k, v in pairs(character.attack) do
+			print(k, v)
 		end
 
-		if key == "2" and
-			character.loot >= game.shop.range
-			then
-			character.attack.range = character.attack.range + 0.5
-			character.loot = character.loot - game.shop.range
-		end
+        for i, item in ipairs(shopItems) do
+			print(item.key, item.stat, item.cost)
+            if key == item.key and character.loot >= item.cost then
+                if item.stat == "health" then
+                    character.health = character.health + 1
+				elseif item.stat=="movement" then
+					if character.speed < character.max_speed then
+						character.speed = character.speed + 1
+					end
+                else
+                    character.attack[item.stat] = character.attack[item.stat] + 1
+                end
 
-		if key == "3" and
-			character.loot >= game.shop.speed
-			then
-
-			character.speed = character.speed + 0.5
-			character.loot = character.loot - game.shop.speed
-		end
-        if key == "4" and
-            character.loot >= game.shop.health
-            then
-				character.loot = character.loot - game.shop.health
-                character.health = character.health + 1
+                character.loot = character.loot - item.cost
+                break  -- Exit the loop after processing the transaction
             end
-	end
-	key = nil
-	return character, game, key
+        end
+    end
+
+    key = nil
+    return character, game, key
 end
 
 function scripts.default(character, condition, game)
@@ -131,7 +135,7 @@ function scripts.bosslevel(character, condition, game)
 		TiledMap_SetLayerInvisByName("Hidden2")
 		game.music.default:stop();
 		game.music.battle:play();
-		print("bosslevel init")
+
 		--table.insert(game.inputScripts, shop)
 	else
 
