@@ -1,5 +1,5 @@
 --[[
-	First LÖVE2d Game. 
+	First Lï¿½VE2d Game.
 	Author: Esa Karjalainen
 	(esa.karjalainen (at) gmail.com)
 	Tiled maps, Diablolike
@@ -27,7 +27,7 @@ local tiled = require ("libs.tiledmap") -- customized
 local game = require("first.game")
 
 require("libs.AnAL")
--- external library, consider using. 
+-- external library, consider using.
 --HC = require 'HardonCollider'
 
 --function math.getAngle(x1,y1, x2,y2) return math.atan2(x2-x1, y2-y1) end
@@ -43,7 +43,7 @@ function love.keypressed(key)
 			print (area)
 		end
 	end
-		
+
 	if key ==  'escape' then
 		love.event.push('quit')
 	end
@@ -58,25 +58,34 @@ function love.keypressed(key)
       		local state = not love.mouse.isVisible()   -- the opposite of whatever it currently is
       		love.mouse.setVisible(state)
    	end
-	
-	for i, script in ipairs(game.inputScripts) do
-		if (nil ~= script) then			
-			character, game, key = script(key, character, game)
-		end
+
+	if key == "t" then
+		game.testing = not game.testing
+		print("testing: " .. tostring(game.testing))
 	end
 
 	--for testing
-	if game.testing == false then return end
-	if key == "f1" then 
-		game.paused = false
-		character.health = character.health + 1
-		game.levels.next()
-		if nil ~=  game.levels.currentlevel then 
-			character, game = game.loadLevelByIndex(game.levels.index, character)
+	if game.testing == true then
+		if key == "f1" then
+			skip_level()
 		end
 	end
 
+	for i, script in ipairs(game.inputScripts) do
+		if (nil ~= script) then
+			character, game, key = script(key, character, game)
+		end
+	end
 	--print( key)
+end
+
+function skip_level()
+	game.paused = false
+	character.health = character.health + 1
+	game.levels.next()
+	if nil ~=  game.levels.currentlevel then
+		character, game = game.loadLevelByIndex(game.levels.index, character)
+	end
 end
 
 marker = nil
@@ -99,24 +108,25 @@ function love.load()
 	game.sfx["hurt"] = love.audio.newSource("sfx/Hit_Hurt.wav", static)
 
 	print ("love.load ".. game.music.sources["default"])
-	for key, filename in pairs (game.music.sources) do 
+	for key, filename in pairs (game.music.sources) do
 		print ("key " .. key .. " name " .. filename )
-		if love.filesystem.exists(filename) then 
-			game.music[key] = love.audio.newSource(game.music.sources["default"], static)
+		if love.filesystem.exists(filename) then
+			game.music[key] = love.audio.newSource(game.music.sources[key], static)
 			game.music[key]:setVolume(0.1)
-		
+			game.music[key]:setLooping(true)
+
 		end
 	end
-	
+
 	if game.music.default ~= nil then love.audio.play(game.music["default"]) end
 
 
 	love.mouse.setVisible(false)
 	canvas = love.graphics.newCanvas()
-	--image = love.graphics.newImage('gfx/testi.png')	
+	--image = love.graphics.newImage('gfx/testi.png')
 	--image:setFilter('linear', 'nearest')
 
-	for i, filename in ipairs(game.crgfx) do 
+	for i, filename in ipairs(game.crgfx) do
 		table.insert(crgfx, love.graphics.newImage(filename))
 		--crgfx[i]:setFilter('linear', 'nearest')
 	end
@@ -138,9 +148,9 @@ function love.load()
 		--[[
 		love.graphics.circle('fill', 6,6,5,30)
 		]]--
-		love.graphics.draw(markerimage, 0, 0, 0, (wh/markerimage:getWidth()), (wh/markerimage:getHeight()), 
+		love.graphics.draw(markerimage, 0, 0, 0, (wh/markerimage:getWidth()), (wh/markerimage:getHeight()),
 			0,0)
-		love.graphics.setColor(r, g, b, a)	
+		love.graphics.setColor(r, g, b, a)
 		--love.graphics.line(5,1, 6,2)
 	end)
 
@@ -155,14 +165,29 @@ end
 function love.update(dt)
 	character.animation:update(dt)
     for i, creature in ipairs(game.creatures) do
-        if creature.animation ~= nil then 
+        if creature.animation ~= nil then
             --print("not nil")
-            creature.animation:update(dt) 
+            creature.animation:update(dt)
         end
     end
 end
 
 times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
+
+function drawPauseScreen(screenw, screenh)
+	local sw, sh, aspect,screenaspect
+	sw = splash:getWidth()
+	sh = splash:getHeight()
+
+	aspect = sw/sh
+	screenaspect = screenw/screenh
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(splash, screenw/2,screenh/2, 0,
+		love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
+		sw/2, sh/2)
+end
+
 
 function love.draw()
 
@@ -171,22 +196,12 @@ function love.draw()
 	if (character.invincibility > 15) then character.portrait = game.portraits.hurt end;
 	local screenw = love.graphics.getWidth()
 	local screenh = love.graphics.getHeight()
-	if game.paused then 
-		local sw, sh, aspect,screenaspect
-		sw = splash:getWidth()
-		sh = splash:getHeight()
-	
-		aspect = sw/sh
-		screenaspect = screenw/screenh
-
-		love.graphics.setColor(255,255,255,255)
-		love.graphics.draw(splash, screenw/2,screenh/2, 0, 
-			love.graphics.getWidth()/sw*aspect/screenaspect, love.graphics.getHeight()/sh,
-			sw/2, sh/2)
-		return 
+	if game.paused then
+			drawPauseScreen(screenw, screenh)
+		return
 	end
 
-	if love.graphics.getWidth() < (2*game.view.x) then 
+	if love.graphics.getWidth() < (2*game.view.x) then
 		game.view.x = character.x
 		game.view.y = character.y
 	end
@@ -202,9 +217,9 @@ function love.draw()
 		love.graphics.setColor(255,255,255,255)
 		TiledMap_DrawNearCam(game.view.x,game.view.y, nil)
 		--game.view.x = character.x
-		--game.view.y = character.y 
+		--game.view.y = character.y
 		--TiledMap_DrawNearCam(character.x,character.y, nil)
-		game.adjustObjectPositions()	
+		game.adjustObjectPositions()
 		local rsize = 16
 		local mul = {1, 2, 4, 8}
 		for i, img in ipairs(crgfx) do
@@ -226,13 +241,13 @@ function love.draw()
 	times.middle = times.middle + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
 	character.area = {}
-	for i, to in  ipairs(game.tiledobjects) do 
+	for i, to in  ipairs(game.tiledobjects) do
 		--local to = game.tiledobjects[i]
 		if nil == to then break end
-		if nil ~= to.gid then 
+		if nil ~= to.gid then
 			local tileimage = TiledMap_GetTileByGid(to.gid)
-			if nil ~= tileimage then 
-				love.graphics.draw(tileimage, to.x, to.y, 0, 1, 1, 0, tileimage:getHeight() ) 
+			if nil ~= tileimage then
+				love.graphics.draw(tileimage, to.x, to.y, 0, 1, 1, 0, tileimage:getHeight() )
 			end
 		end
 
@@ -245,12 +260,12 @@ function love.draw()
 	end
 	times.endseg = times.endseg + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
-	
+
 	-- run per-level custom script
 
 	local levelfunction = game.levels.getFunction(game.levels.index)
-	if nil ~= levelfunction then 
-		character, game = levelfunction(character, nil, game) 
+	if nil ~= levelfunction then
+		character, game = levelfunction(character, nil, game)
 	end
 
 	times.custom = times.custom + (love.timer.getTime() - ttime);
@@ -292,17 +307,17 @@ function love.draw()
 
 	love.graphics.setColor(255, 0, 0, 225)
 
-	--Draw Creatures-- 
-	for i = 1, #game.creatures do 
+	--Draw Creatures--
+	for i = 1, #game.creatures do
 		crtr = game.creatures[i]
 		if crtr == nil then break end
-		if crtr.health < 1 then 
+		if crtr.health < 1 then
 			if game.scripts.creatureSlain ~=nil then
 				game.scripts.creatureSlain(crtr)
 			end
             -- is this random causing money-in-walls?
 			game.createLoot(crtr.x + math.random(crtr.size), crtr.y + math.random(crtr.size))
-			table.remove(game.creatures, i)			
+			table.remove(game.creatures, i)
 		end
 
 		wh = 48
@@ -313,11 +328,11 @@ function love.draw()
 		if nil == game.creatures[i] then break end
 		local crtr = game.creatures[i]
 
-		-- take player health on collision 
+		-- take player health on collision
 		if game.collision(character, crtr) and
 			character.invincibility == 0 then
 			character.health = character.health - crtr.damage
-			crtr.speed = 0 
+			crtr.speed = 0
 			character.invincibility = 30
 			character.portrait = game.portraits.hurt
 			game.sfx.hurt:stop()
@@ -328,13 +343,13 @@ function love.draw()
 
 
 		-- go towards player
-		if (math.random() < 0.020 and 150 > math.dist(crtr.x, crtr.y, character.x, character.y)) then 
+		if (math.random() < 0.020 and 150 > math.dist(crtr.x, crtr.y, character.x, character.y)) then
 			game.creatures[i].direction = math.getAngle(crtr.x, crtr.y, character.x, character.y)
 			--print (game.creatures[i].direction)
 			game.creatures[i].speed = 2.2
-		end	
+		end
 		if (math.random() < 0.010) then
-			game.creatures[i].direction = (math.random(0, 32)*math.pi/16) 
+			game.creatures[i].direction = (math.random(0, 32)*math.pi/16)
 			game.creatures[i].speed = 1.0
 		end
 		--
@@ -344,21 +359,22 @@ function love.draw()
 		if game.isWalkableTile(crx, cry, crtr.size) then
 			game.creatures[i].x = crx
 			game.creatures[i].y = cry
-		else 
+		else
 			game.creatures[i].direction = game.creatures[i].direction + math.pi/16
 		end
 
-        --[[ 
-		if (game.creatures[i].x < 0 or game.creatures[i].y < 0) or 
-			(game.creatures[i].x +crtr.size > love.graphics.getWidth() or 
-			game.creatures[i].y + crtr.size > love.graphics.getHeight()) then 
+        --[[
+		if (game.creatures[i].x < 0 or game.creatures[i].y < 0) or
+			(game.creatures[i].x +crtr.size > love.graphics.getWidth() or
+			game.creatures[i].y + crtr.size > love.graphics.getHeight()) then
 			game.creatures[i].direction = game.creatures[i].direction + math.pi
 		end
         ]]--
 
 		for j = 1, #game.projectiles do
-			if nil == game.projectiles[j] then break end
-			if game.collision(game.creatures[i], game.projectiles[j]) then 
+			projectile = game.projectiles[j]
+			if nil == projectile then break end
+			if game.collision(game.creatures[i], projectile) then
 				table.remove(game.projectiles, j)
 				--print (game.creatures[i])
 				game.creatures[i].health = game.creatures[i].health-character.attack.damage
@@ -369,10 +385,10 @@ function love.draw()
 
 	for i = 1, #game.projectiles do
 		local prjctl = game.projectiles[i]
-		
+
 		if prjctl == nil then
 			break
-		end		
+		end
 
 		if prjctl.age > character.attack.range*10 then
 			table.remove(game.projectiles, i)
@@ -387,10 +403,9 @@ function love.draw()
 	--end)
 	--love.graphics.draw(canvas)
 
-	for keyIndex =  1, 4, 1 do 
-		key =  {'w', 'a', 's', 'd'}
-		if love.keyboard.isDown(key[keyIndex]) then
-			character = game.keydown(key[keyIndex], character)	
+	for _, key in ipairs({'w', 'a', 's', 'd'}) do
+		if love.keyboard.isDown(key) then
+			character = game.keydown(key, character)
 		end
 	end
 
@@ -399,13 +414,13 @@ function love.draw()
 	character.direction = angle
 	character = game.handleMouse(character, angle)
 
-	if character.invincibility > 0 then 
+	if character.invincibility > 0 then
 		r, g, b, a = love.graphics.getColor()
 		character.invincibility = character.invincibility - 1
 		love.graphics.setColor(255,128,128,255)
 	end
 
-	
+
 	--love.graphics.draw(character.gfx, character.x, character.y, 0, 1, 1, (character.gfx:getHeight()/2), (character.gfx:getWidth()/2))
 	character.animation:draw(character.x-character.size, character.y-character.size)
     -- local frame = character.animation:getCurrentFrame() --returns index
@@ -421,32 +436,32 @@ function love.draw()
 	--- check if player dead
 	if character.health <= 0 then
 		--fixme make proper
-		love.event.push("quit") 
+		love.event.push("quit")
 	end
 	times.rest = times.rest + (love.timer.getTime() - ttime);
 	ttime = love.timer.getTime()
 
 end
 
-function drawCreature(crtr) 
+function drawCreature(crtr)
     local crwidth=crtr.gfx:getWidth()
     local crheight=crtr.gfx:getHeight()
-    if crtr.animation == nil then 
-        love.graphics.draw(crtr.gfx, 
-        crtr.x+crtr.size/2, 
+    if crtr.animation == nil then
+        love.graphics.draw(crtr.gfx,
+        crtr.x+crtr.size/2,
         crtr.y + (crtr.size/2),
-        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
-        crwidth/2, crheight/2	
+        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight,
+        crwidth/2, crheight/2
         )
     else
         crtr.animation:draw(
-        crtr.x+crtr.size/2, 
+        crtr.x+crtr.size/2,
         crtr.y + (crtr.size/2),
-        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight, 
-        crwidth/2, crheight/2	
+        math.halfPI + crtr.direction, crtr.size/crwidth, crtr.size/crheight,
+        crwidth/2, crheight/2
         )
     end
     love.graphics.setColor(255, 0, 0, 128)
-    love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2, 
+    love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2,
     math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
 end

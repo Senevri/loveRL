@@ -1,5 +1,5 @@
---[[ 
---	Game code 
+--[[
+--	Game code
 --
 ]]--
 
@@ -17,18 +17,23 @@ game.loot = {}
 
 game.inputScripts = {}
 
-function game.setup() 
-    game.portraits.default = love.graphics.newImage('gfx/portrait_default.png');
-    game.portraits.hurt = love.graphics.newImage('gfx/portrait_hurt.png');
-    game.portraits.attack = love.graphics.newImage('gfx/portrait_attack.png');
-    game.portraits.quad = love.graphics.newImage('gfx/portrait_quad.png');
+function game.setup()
+    portraits = {
+        default = 'portrait_default.png',
+        hurt = 'portrait_hurt.png',
+        attack = 'portrait_attack.png',
+        quad = 'portrait_quad.png'
+    }
+    for key, value in pairs(portraits) do
+        game.portraits[key] = love.graphics.newImage('gfx/' .. value)
+    end
 end
 
 game.adjusting = {amount=0, direction=0}
 function game.adjustObjectPositions()
-    if (game.adjusting.amount ~=0) then 
+    if (game.adjusting.amount ~=0) then
         for i, to in ipairs(game.creatures) do
-            to.y = to.y + game.adjusting.direction		
+            to.y = to.y + game.adjusting.direction
         end
 
         for i, to in ipairs(game.projectiles) do
@@ -41,7 +46,7 @@ function game.adjustObjectPositions()
         character.y = character.y + game.adjusting.direction
         game.view.y = game.view.y - game.adjusting.direction
         game.adjusting.amount = game.adjusting.amount -1
-    else 
+    else
         if character.y > 2*love.graphics.getHeight()/3 then
             game.adjusting.amount = 16--love.graphics.getHeight()/8
             game.adjusting.direction = -1
@@ -53,7 +58,7 @@ function game.adjustObjectPositions()
     end
 end
 
-function game.adjustY(origy) 
+function game.adjustY(origy)
     return origy - game.view.y + love.graphics.getHeight()/2
 end
 
@@ -79,7 +84,7 @@ function game.keydown(key, character)
     end
     if game.isWalkableTile(x,y) or game.isWalkableObject(x, y) then
         character.x = x
-        character.y = y		
+        character.y = y
     end
 
     return character
@@ -110,7 +115,7 @@ function game.handleMouse(character, angle)
             local projectile = game.createProjectile(character.x, character.y, character.direction)
             character.attack.cooldown = 60/projectile.rate
             --love.audio.play(game.sfx.attack)
-            if 0 >= game.sfxplaying then 
+            if 0 >= game.sfxplaying then
                 game.sfx.attack:stop()
                 game.sfx.attack:play()
                 game.sfxplaying = 6
@@ -132,15 +137,15 @@ function game.isWalkableTile(x, y, size)
     local tiletype = TiledMap_GetMapTile(tx, ty, 1)
     --FIXME magic tile type
     if 10 == tiletype then
-        return true 
+        return true
     else return false end
 end
 
 
 function game.isWalkableObject(x,y)
-    for i, obj in ipairs(game.tiledobjects) do 
-        -- for walkables, width and height exist -- 
-        if obj.type ~= nil and (obj.type == "walkable") then 
+    for i, obj in ipairs(game.tiledobjects) do
+        -- for walkables, width and height exist --
+        if obj.type ~= nil and (obj.type == "walkable") then
             if (tonumber(obj.x) <= x) and (tonumber(game.adjustY(obj.y)) <= y) and ((obj.x + obj.width) >= x) and ((game.adjustY(obj.y)+obj.height) >= y) then
                 return true;
             end
@@ -171,9 +176,9 @@ game.animationsources = {
 }
 
 
-function game.createCreature(x,y,direction, size, health, crtype)  
+function game.createCreature(x,y,direction, size, health, crtype)
     local creature = {
-        x=x, y=y, direction=direction, 
+        x=x, y=y, direction=direction,
         size=size, health=health, speed=1.5, damage=0.5,
         gfx = love.graphics.newImage(game.crgfx[crtype]),
         animation = game.createCreatureAnimation(crtype),
@@ -182,16 +187,16 @@ function game.createCreature(x,y,direction, size, health, crtype)
 	return creature
 end
 
-function game.createCreatureAnimation(crtype) 
-    local animation = nil 
+function game.createCreatureAnimation(crtype)
+    local animation = nil
     local src = game.animationsources[crtype]
-    if (nil ~= src) then 
+    if (nil ~= src) then
         --print(src)
         local image = love.graphics.newImage(src)
-        local canvas = love.graphics.newCanvas(320*3, 320) 
-        canvas:renderTo(function() 
-            love.graphics.draw(image, 0, 0, 0, 
-            canvas:getWidth()/image:getWidth(), 
+        local canvas = love.graphics.newCanvas(320*1, 320)
+        canvas:renderTo(function()
+            love.graphics.draw(image, 0, 0, 0,
+            canvas:getWidth()/image:getWidth(),
             canvas:getHeight()/image:getHeight())
         end)
         if crtype == "spider" then
@@ -205,33 +210,40 @@ function game.createCreatureAnimation(crtype)
     return animation
 end
 
+function findNearestValidTile(x, y, half_tile)
+    -- get nearest valid tile.
+    local offsets = {
+        {x = half_tile, y = 0},
+        {x = -half_tile, y = 0},
+        {x = 0, y = half_tile},
+        {x = 0, y = -half_tile}
+    }
 
-function game.createLoot(x,y) 
-	--FIXME: do not create loot inside a wall
-    if not game.isWalkableTile(x, y) then
-        -- get nearest valid tile.
-        half_tile = 32
-        if game.isWalkableTile(x + half_tile, y) then 
-            x = x + half_tile
-        elseif game.isWalkableTile(x - half_tile, y) then
-            x = x - half_tile
-        elseif game.isWalkableTile(x, y + half_tile) then
-            y = y + half_tile
-        elseif game.isWalkableTile(x, y - half_tile) then
-            y = y - half_tile
+    for _, offset in ipairs(offsets) do
+        local newX, newY = x + offset.x, y + offset.y
+        if game.isWalkableTile(newX, newY) then
+            return newX, newY
         end
     end
+
+    return x, y  -- If no valid tile found, return the original position
+end
+
+function game.createLoot(x,y)
+	--FIXME: do not create loot inside a wall
+    local half_tile = 32
+    x, y = findNearestValidTile(x, y, half_tile)
     local val = math.random(5)
     local loot = { x = x, y = y, value = val, size = 3 + val * 2 }
     table.insert(game.loot, loot)
 end
 
--- let's test if this is universal -- 
-function game.collision(creature, creature2) 	
+-- let's test if this is universal --
+function game.collision(creature, creature2)
     local size = creature.size / 2
     local cx = creature.x + size
     local cy = creature.y + size
-    if creature2.size == nil then 
+    if creature2.size == nil then
         creature2.size = 0
     end
     local size2 = creature2.size / 2
@@ -239,7 +251,7 @@ function game.collision(creature, creature2)
     local cy2 = creature2.y + size2
 
     --optimization
-    if (cx-cx2)*(cx-cx2)+(cy-cy2)*(cy-cy2) > (size+size2)*(size+size2) then 
+    if (cx-cx2)*(cx-cx2)+(cy-cy2)*(cy-cy2) > (size+size2)*(size+size2) then
         return false
     end
 
@@ -252,20 +264,21 @@ function game.collision(creature, creature2)
     return false
 end
 
-function game.getCharacterObjectArea(character, object) 
+function game.getCharacterObjectArea(character, object)
     local charx = character.x --+ game.view.x --- (love.graphics.getWidth()/2)
     local chary = character.y
     local objy = object.y - game.view.y + love.graphics.getHeight()/2
-	
+
+    --print(game.testing)
 	-- draw box around area
-	if game.testing then 
-		love.graphics.rectangle("line", object.x, 
+	if game.testing then
+		love.graphics.rectangle("line", object.x,
 		object.y - game.view.y + love.graphics.getHeight()/2,
 		object.width, object.height)
-	end 
-	
-	if charx > tonumber(object.x) and chary > tonumber(objy) and 
-        charx < object.x + object.width and 
+	end
+
+	if charx > tonumber(object.x) and chary > tonumber(objy) and
+        charx < object.x + object.width and
         chary < objy + object.height then
         return object.name
     end
@@ -279,9 +292,9 @@ function game.setupCharacter(chr)
     if nil == chr then
         character = {}
     end
-	
+
 	if game.testing then character.loot = 9999 end
-	
+
     local objects = TiledMap_Objects(game.levels.currentlevel)
     for k, object in pairs(objects) do
         objects[k].x = object.x - game.view.x + (love.graphics.getWidth()/2 )
@@ -305,9 +318,9 @@ function game.setupCharacter(chr)
         --[[
         love.graphics.circle('fill', 6,6,5,30)
         ]]--
-        -- lots of extra space per frame, so... 
+        -- lots of extra space per frame, so...
         love.graphics.draw(image, 0, 0, 0, (framecountx * (wh)/(image:getWidth())), ((wh)/image:getHeight()), 0, 0)
-        love.graphics.setColor(r, g, b, a)	
+        love.graphics.setColor(r, g, b, a)
         --love.graphics.line(5,1, 6,2)
     end)
 
@@ -335,7 +348,7 @@ game.shop = {}
 game.levels = require("first.levels")
 game.levels.init(game)
 
-function game.loadLevelByIndex(index, character) 
+function game.loadLevelByIndex(index, character)
     game.loot = {}
     game.creatures = {}
     game.view = {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2, xratio = 1, yratio = 1}
@@ -369,7 +382,7 @@ function game.inShop()
         speed = (character.speed + 0.5) *6,
 		health = 5
     }
-	
+
 	love.graphics.setColor(0,0,16,144)
 	love.graphics.rectangle("fill", 6, 60, 128, 80)
 	love.graphics.setColor(255,212,0,255)
