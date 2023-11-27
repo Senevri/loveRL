@@ -6,7 +6,7 @@ function setupCharacter(chr, game)
         character.speed = 2
         character.max_speed = 10
         character.health = 6
-        character.attack = {damage=1, range=1, cooldown = 0, rate = 1, speed = 4}
+        character.attack = {damage=1, range=2, cooldown = 0, rate = 2, speed = 4}
     end
 
     character.portrait = game.portraits.default

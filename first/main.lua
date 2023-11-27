@@ -175,8 +175,9 @@ end
 
 times = { start = 0, middle = 0, endseg = 0, custom = 0, rest = 0}
 
+SCALE_RATIO = 3
 DEFAULTSIZE = 320
-SCALE = (love.graphics.getWidth()/3)/DEFAULTSIZE
+SCALE = (love.graphics.getWidth()/SCALE_RATIO)/DEFAULTSIZE
 --SCALE=1
 function drawPauseScreen(screenw, screenh)
 	local sw, sh, aspect,screenaspect
@@ -487,7 +488,7 @@ function drawCreature(crtr)
         crwidth/2, crheight/2
         )
     end
-    love.graphics.setColor(255, 0, 0, 128)
-    love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2,
-    math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
+    -- love.graphics.setColor(255, 0, 0, 128)
+    -- love.graphics.draw(marker, crtr.x + crtr.size/2, crtr.y+crtr.size/2,
+    -- math.halfPI + crtr.direction, 2.2*crtr.size/48, 2.2*crtr.size/48, 24, 24)
 end
