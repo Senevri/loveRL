@@ -304,20 +304,21 @@ function TiledMap_Objects(filename, objectname)
 		if (sub.label == "objectgroup") then
 			--print ("found objectgroup")
 			for l, child in ipairs(sub) do
-				to = child.xarg
+				local to = child.xarg
 				to.properties = nil
 				if child[1] ~= nil then
-					to.properties = {}
-					local property = {}
+                    to.properties = {}
 					for i, prop in ipairs(child[1]) do
-
-						local name = prop.xarg.name
-						local value = prop.xarg.value
-						--property[name]=value
-						property.name = name
-						property.value = value
+                        local property = {}
+                        if next(prop.xarg) ~= nil then
+                            local name = prop.xarg.name
+                            local value = prop.xarg.value
+                            --property[name]=value
+                            property.name = name
+                            property.value = value
+                        end
+                        table.insert(to.properties, property)
 					end
-					table.insert(to.properties, property)
 				end
 				if objectname == nil then
 					table.insert(objects, to)

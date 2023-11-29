@@ -13,9 +13,19 @@ local creatureSpecs = {
     boss = { size=128, spawned = false}
 }
 
+function split_csv_string(str, char)
+	local list = {}
+	local i = 0
+
+	for token in string.gmatch(str .. ',', "([^"..char.."]+),%s*") do
+		table.insert(list, token)
+	end
+	return list
+end
+
 function shop(key, character, game)
     if character.area and character.area["Shop"] then
-        print("Shop transaction - " .. tostring(key))
+        print("Shop")
 
         local shopItems = {
             {key = "1", stat = "damage", cost = game.shop.attack},
@@ -26,13 +36,10 @@ function shop(key, character, game)
 			{key = "6", stat = "health", cost = game.shop.health}
         }
 
-		for k, v in pairs(character.attack) do
-			print(k, v)
-		end
-
         for i, item in ipairs(shopItems) do
-			print(item.key, item.stat, item.cost)
             if key == item.key and character.loot >= item.cost then
+				print("Shop transaction - " .. item.stat)
+				print(item.key, item.stat, item.cost)
                 if item.stat == "health" then
                     character.health = character.health + 1
 				elseif item.stat=="movement" then
@@ -63,11 +70,23 @@ function scripts.default(character, condition, game)
 		for key, object in pairs(game.tiledobjects) do
 			local spawnarea = nil
 			if object.name == "SpawnArea" then
-				spawnarea = object
-				local randomcreature = {"spider", "goblin", "colossus"}
-				for i = 1, 10, 1 do
-					local crid = math.random(3)
-                    local spec = creatureSpecs[randomcreature[crid]]
+				local spawnarea = object
+				local creature_count = 20
+				local randomcreature = {"spider"}
+				if nil ~= spawnarea.properties then
+					for _, prop in pairs(spawnarea.properties) do
+						if prop.name == "Count" then
+							print("found count")
+							creature_count = tonumber(prop.value)
+						elseif prop.name == "Types" then
+							print("found types")
+							randomcreature = split_csv_string(prop.value, ",")
+						end
+					end
+				end
+				for i = 1, creature_count, 1 do
+					local crid = math.random(#randomcreature)
+					local spec = creatureSpecs[randomcreature[crid]]
 					game.createCreature(
                     spawnarea.x + math.random(spawnarea.width),
 					spawnarea.y + math.random(spawnarea.height),
